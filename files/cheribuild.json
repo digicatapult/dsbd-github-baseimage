@@ -1,0 +1,10 @@
+{
+  "source-root": "/home/cheri/cheri",
+  "output-root": "/output",
+  "cheribsd": {
+    "source-directory": "/home/cheri/cheri/cheribsd"
+  },
+  "qemu": {
+    "source-directory": "/home/cheri/cheri/qemu"
+  }
+}
