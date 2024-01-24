@@ -17,7 +17,7 @@ SERVICE_FILE="/etc/systemd/system/qemu-morello.service"
 SERVICE_SRC="/tmp/qemu-morello.service"
 UPDATER_FILE="/etc/systemd/system/update_qemu_morello_config.service"
 UPDATER_SRC="/tmp/update_qemu_morello_config.service"
-UPDATER_SCRIPT="/usr/local/sbin/update_qemu_morello_config.sh"
+UPDATER_SCRIPT="/usr/local/bin/update_qemu_morello_config.sh"
 UPDATER_SCRIPT_SRC="/tmp/update_qemu_morello_config.sh"
 
 echo "Configuration variables set."
