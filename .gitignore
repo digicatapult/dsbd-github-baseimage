@@ -1,6 +1,7 @@
 secrets.auto.pkrvars.hcl
 meta-data
 user-data
+cidata.*
 
 config/local.json
 

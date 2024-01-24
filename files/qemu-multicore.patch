@@ -1,4 +1,4 @@
-
+git diff a4750b7a81c1ff2889d6d6edee5efe10343b2acf
 diff --git a/target/mips/cheri-archspecific-early.h b/target/mips/cheri-archspecific-early.h
 index c3941faa..232a4f5e 100644
 --- a/target/mips/cheri-archspecific-early.h
@@ -12,7 +12,6 @@ index c3941faa..232a4f5e 100644
  {
      cheri_debug_assert(env->active_tc.PCC.cr_extra == CREG_FULLY_DECOMPRESSED);
      return &env->active_tc.PCC;
-
 diff --git a/target/mips/cpu.h b/target/mips/cpu.h
 index 1ff60dfb..247d7652 100644
 --- a/target/mips/cpu.h
@@ -26,102 +25,3 @@ index 1ff60dfb..247d7652 100644
  {
  #ifdef CONFIG_DEBUG_TCG
      return env->active_tc._pc_is_current;
-diff --git a/accel/tcg/cputlb.c b/accel/tcg/cputlb.c
-index 73f7d6b828..e7bfaac8c4 100644
---- a/accel/tcg/cputlb.c
-+++ b/accel/tcg/cputlb.c
-@@ -1749,7 +1749,7 @@ probe_access_inlined(CPUArchState *env, target_ulong addr, int size,
- 
-         /* Handle clean RAM pages.  */
-         if (flags & TLB_NOTDIRTY) {
--            notdirty_write(env_cpu(env), addr, 1, iotlbentry, retaddr);
-+            notdirty_write(env_cpu(env), addr, size, iotlbentry, retaddr);
-         }
-     }
- 
-diff --git a/target/cheri-common/cheri_tagmem.c b/target/cheri-common/cheri_tagmem.c
-index d9670b276a..8c803f0f20 100644
---- a/target/cheri-common/cheri_tagmem.c
-+++ b/target/cheri-common/cheri_tagmem.c
-@@ -358,26 +358,25 @@ static QEMU_ALWAYS_INLINE target_ulong tag_offset_to_addr(TagOffset offset)
- }
- 
- static void *cheri_tag_invalidate_one(CPUArchState *env, target_ulong vaddr,
--                                      uintptr_t pc, int mmu_idx);
-+                                      int32_t size, uintptr_t pc, int mmu_idx);
- 
- void *cheri_tag_invalidate_aligned(CPUArchState *env, target_ulong vaddr,
-                                    uintptr_t pc, int mmu_idx)
- {
-     cheri_debug_assert(QEMU_IS_ALIGNED(vaddr, CHERI_CAP_SIZE));
--    return cheri_tag_invalidate_one(env, vaddr, pc, mmu_idx);
-+    return cheri_tag_invalidate_one(env, vaddr, CHERI_CAP_SIZE, pc, mmu_idx);
- }
- 
- void cheri_tag_invalidate(CPUArchState *env, target_ulong vaddr, int32_t size,
-                           uintptr_t pc, int mmu_idx)
- {
--    cheri_debug_assert(size > 0);
-     target_ulong first_addr = vaddr;
-     target_ulong last_addr = (vaddr + size - 1);
-     TagOffset tag_start = addr_to_tag_offset(first_addr);
-     TagOffset tag_end = addr_to_tag_offset(last_addr);
-     if (likely(tag_start.value == tag_end.value)) {
-         // Common case, only one tag (i.e. an aligned store)
--        cheri_tag_invalidate_one(env, vaddr, pc, mmu_idx);
-+        cheri_tag_invalidate_one(env, vaddr, size, pc, mmu_idx);
-         return;
-     }
-     // Unaligned store -> can cross a capabiblity alignment boundary and
-@@ -411,22 +410,28 @@ void cheri_tag_invalidate(CPUArchState *env, target_ulong vaddr, int32_t size,
-     exit(1);
- #endif
- #endif
--    for (target_ulong addr = tag_offset_to_addr(tag_start);
--         addr <= tag_offset_to_addr(tag_end); addr += CHERI_CAP_SIZE) {
--        cheri_tag_invalidate_one(env, addr, pc, mmu_idx);
-+    target_ulong second_addr = tag_offset_to_addr(tag_start) + CHERI_CAP_SIZE;
-+    cheri_tag_invalidate_one(env, first_addr, second_addr - first_addr, pc,
-+                             mmu_idx);
-+    for (target_ulong addr = second_addr; addr <= tag_offset_to_addr(tag_end);
-+         addr += CHERI_CAP_SIZE) {
-+        target_ulong inval_size = MIN(CHERI_CAP_SIZE, last_addr + 1 - addr);
-+        cheri_tag_invalidate_one(env, addr, inval_size, pc, mmu_idx);
-     }
- }
- 
- static void *cheri_tag_invalidate_one(CPUArchState *env, target_ulong vaddr,
--                                      uintptr_t pc, int mmu_idx)
-+                                      int32_t size, uintptr_t pc, int mmu_idx)
- {
-+    cheri_debug_assert(size > 0);
-+
-     /*
-      * When resolving this address in the TLB, treat it like a data store
-      * (MMU_DATA_STORE) rather than a capability store (MMU_DATA_CAP_STORE),
-      * so that we don't require that the SC inhibit be clear.
-      */
- 
--    void *host_addr = probe_write(env, vaddr, 1, mmu_idx, pc);
-+    void *host_addr = probe_write(env, vaddr, size, mmu_idx, pc);
-     // Only RAM and ROM regions are backed by host addresses so if
-     // probe_write() returns NULL we know that we can't write the tagmem.
-     if (unlikely(!host_addr)) {
-@@ -531,7 +536,7 @@ void *cheri_tag_set(CPUArchState *env, target_ulong vaddr, int reg,
-      */
-     store_capcause_reg(env, reg);
-     // Note: this probe will handle any store cap faults
--    void *host_addr = probe_cap_write(env, vaddr, 1, mmu_idx, pc);
-+    void *host_addr = probe_cap_write(env, vaddr, CHERI_CAP_SIZE, mmu_idx, pc);
-     clear_capcause_reg(env);
- 
-     handle_paddr_return(write);
-@@ -579,7 +584,7 @@ bool cheri_tag_get(CPUArchState *env, target_ulong vaddr, int reg,
- {
- 
-     if (host_addr == NULL) {
--        host_addr = probe_read(env, vaddr, 1, mmu_idx, pc);
-+        host_addr = probe_read(env, vaddr, CHERI_CAP_SIZE, mmu_idx, pc);
-     }
-     handle_paddr_return(read);
- 

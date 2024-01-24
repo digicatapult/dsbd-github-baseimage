@@ -11,9 +11,6 @@ packer {
   }
 }
 
-# Include the variable file
-variable_files = ["variables.pkr.hcl"]
-
 # Cloud-init configuration files
 source "file" "user_data" {
   content = <<-EOF
@@ -43,6 +40,7 @@ source "azure-arm" "ubuntu" {
   image_offer        = var.image_offer
   image_sku          = var.image_sku
   os_type            = var.os_type
+  os_disk_size_gb    = var.os_disk_size_gb
   shared_image_gallery_destination {
     resource_group       = var.image_resource_group_name
     gallery_name         = var.gallery_name
@@ -86,13 +84,18 @@ build {
     destination = "/tmp/cheribuild-gmp-git.patch"
   }
   provisioner "file" {
-    source      = "./files/qemu-packer/"
-    destination = "/tmp/qemu-packer/"
+    source      = "./files/qemu-morello.service"
+    destination = "/tmp/qemu-morello.service"
   }
 
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E bash '{{ .Path }}'"
     script = "./scripts/install-cheribuild.sh"
+  }
+
+  provisioner "shell" {
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E bash '{{ .Path }}'"
+    script = "./scripts/create-cheribsd-image.sh"
   }
   provisioner "shell" {
     only = ["azure-arm.ubuntu"]
