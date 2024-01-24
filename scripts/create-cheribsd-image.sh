@@ -81,7 +81,7 @@ setup_systemd_service() {
         cp "$SERVICE_SRC" "$SERVICE_FILE"
         systemctl daemon-reload
         systemctl enable qemu-morello.service
-        echo "Systemd service setup complete."
+        echo "Systemd qemu-morello service setup complete."
     else
         echo "Service unit file ($SERVICE_SRC) not found."
         exit 1
@@ -93,7 +93,7 @@ setup_systemd_service() {
         chmod +x "$UPDATER_SCRIPT"
         systemctl daemon-reload
         systemctl enable update_qemu_morello_config.service
-        echo "Systemd service setup complete."
+        echo "Systemd update-qemu-morello-config service setup complete."
     else
         echo "Service unit file ($UPDATER_SRC) or Service script ($UPDATER_SCRIPT_SRC) not found."
         exit 1
