@@ -54,7 +54,6 @@ variable "image_name" {
 variable "image_version" {
   description = "Version of the image in the shared image gallery"
   type        = string
-  default     = "0.0.1"
 }
 
 variable "storage_account_type" {
@@ -67,6 +66,12 @@ variable "vm_size" {
   description = "Size of the VM used for building the image"
   type        = string
   default     = "Standard_D2pds_v5"
+}
+
+variable "os_disk_size_gb" {
+  description = "Size of the OS disk in GB"
+  type        = number
+  default     = 128
 }
 # Common Variables
 
