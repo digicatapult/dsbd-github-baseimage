@@ -1,16 +1,17 @@
 [Unit]
 Description=QEMU Morello Service
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target update-qemu-morello-config.service
+After=network-online.target update-qemu-morello-config.service
 
 [Service]
 Type=simple
 User=cheri
 Group=cheri
+EnvironmentFile=/etc/sysconfig/qemu-morello.conf
 ExecStart=/output/sdk/bin/qemu-system-morello \
     -M virt,gic-version=3 -cpu morello \
     -bios edk2-aarch64-code.fd \
-    -smp cores=1,threads=4,sockets=1 -m 4096 -nographic \
+    -smp ${QEMU_SMP} -m ${QEMU_MEM} -nographic \
     -drive if=none,file=/output/cheribsd-morello-purecap.zfs.qcow2,id=drv0,format=qcow2 \
     -device virtio-blk-pci,drive=drv0 \
     -drive if=none,file=/output/jailroot-disk.zfs.qcow2,id=drv1,format=qcow2 \

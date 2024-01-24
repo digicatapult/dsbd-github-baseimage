@@ -15,6 +15,10 @@ JAILROOT_DISK="/output/jailroot-disk.zfs.qcow2"
 JAILROOT_SIZE="50G"
 SERVICE_FILE="/etc/systemd/system/qemu-morello.service"
 SERVICE_SRC="/tmp/qemu-morello.service"
+UPDATER_FILE="/etc/systemd/system/update_qemu_morello_config.service"
+UPDATER_SRC="/tmp/update_qemu_morello_config.service"
+UPDATER_SCRIPT="/usr/local/sbin/update_qemu_morello_config.sh"
+UPDATER_SCRIPT_SRC="/tmp/update_qemu_morello_config.sh"
 
 echo "Configuration variables set."
 
@@ -79,7 +83,19 @@ setup_systemd_service() {
         systemctl enable qemu-morello.service
         echo "Systemd service setup complete."
     else
-        echo "Service file ($SERVICE_SRC) not found."
+        echo "Service unit file ($SERVICE_SRC) not found."
+        exit 1
+    fi
+    echo "Setting up systemd QEMU configuration updater service..."
+    if [ -f "$UPDATER_SRC" ]; then
+        cp "$UPDATER_SRC" "$UPDATER_FILE"
+        cp "$UPDATER_SCRIPT_SRC" "$UPDATER_SCRIPT"
+        chmod +x "$UPDATER_SCRIPT"
+        systemctl daemon-reload
+        systemctl enable update_qemu_morello_config.service
+        echo "Systemd service setup complete."
+    else
+        echo "Service unit file ($UPDATER_SRC) or Service script ($UPDATER_SCRIPT_SRC) not found."
         exit 1
     fi
 }
