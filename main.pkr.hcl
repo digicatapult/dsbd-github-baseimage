@@ -87,12 +87,18 @@ build {
     source      = "./files/qemu-morello.service"
     destination = "/tmp/qemu-morello.service"
   }
-
+  provisioner "file" {
+    source      = "./files/update-qemu-morello-config.service"
+    destination = "/tmp/update-qemu-morello-config.service"
+  }
+  provisioner "file" {
+    source      = "./files/update_qemu_morello_config.sh"
+    destination = "/tmp/update_qemu_morello_config.sh"
+  }
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E bash '{{ .Path }}'"
     script = "./scripts/install-cheribuild.sh"
   }
-
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E bash '{{ .Path }}'"
     script = "./scripts/create-cheribsd-image.sh"
