@@ -4,6 +4,10 @@ packer {
       source  = "github.com/hashicorp/azure"
       version = "~> 2"
     }
+    amazon = {
+      source  = "github.com/hashicorp/amazon"
+      version = "~> 1"
+    }
     qemu = {
       source  = "github.com/hashicorp/qemu"
       version = "~> 1"
@@ -51,9 +55,32 @@ source "azure-arm" "ubuntu" {
   vm_size             = var.vm_size
 }
 
+# AWS EBS Builder configuration
+source "amazon-ebs" "ubuntu" {
+  access_key           = var.aws_access_key
+  secret_key           = var.aws_secret_key
+  region               = var.aws_region
+  source_ami_filter {
+    filters = {
+      name                = var.aws_source_ami_name
+      root-device-type    = "ebs"
+      virtualization-type = "hvm"
+    }
+    owners = [var.aws_source_ami_owner]
+    most_recent = true
+  }
+  instance_type        = var.aws_instance_type
+  ssh_username         = var.aws_ssh_username
+  ami_name             = "${var.aws_ami_name}-{{timestamp}}"
+  launch_block_device_mappings {
+    device_name = "/dev/sda1"
+    volume_size          = var.os_disk_size_gb
+  }
+}
+
 # Build Process
 build {
-  sources = ["source.azure-arm.ubuntu"]
+  sources = ["source.azure-arm.ubuntu", "source.amazon-ebs.ubuntu"]
 
   # Cloud-init may still be running when we start executing scripts
   # To avoid race conditions, make sure cloud-init is done first
@@ -110,6 +137,25 @@ build {
       "apt-get update",
       "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y",
       "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+    ]
+  }
+  provisioner "shell" {
+    only = ["amazon-ebs.ubuntu"]  # Specifies that this provisioner runs only for the AWS build
+    execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'"
+    inline = [
+      "apt-get update",  # Updates the list of available packages
+      "DEBIAN_FRONTEND=noninteractive apt-get upgrade -y",  # Upgrades all the installed packages
+
+      # AWS specific cleanup and preparation commands
+      # (replace or remove these with commands relevant to your use case)
+      "sudo cloud-init clean --logs",  # Cleans up cloud-init artifacts and logs
+      "echo 'AWS-specific commands or cleanup'",
+
+      # The following commands are often used in AWS to prepare an instance for AMI creation
+      "sudo rm -rf /var/lib/cloud/instances/*",  # Remove cloud-init instance data
+      "sudo rm -rf /var/log/cloud-init*.log",    # Clean up cloud-init logs
+      "sudo rm -rf /var/log/awslogs.log",        # Clean up awslogs
+      "export HISTSIZE=0 && sync"                # Clear history and sync to disk
     ]
   }
 }
