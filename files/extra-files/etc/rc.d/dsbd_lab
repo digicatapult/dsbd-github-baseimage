@@ -60,7 +60,7 @@ create_base() {
 
 dsbd_lab_prestart() {
     echo "[info] DRL has been started"
-    
+
     # Mount block devices
     echo "[info] initialising DRL; creating ZFS mounts"
     zpool create -f jailroot vtbd1
