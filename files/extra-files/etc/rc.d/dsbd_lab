@@ -37,7 +37,7 @@ POT_EXTIF=vtnet0" > ./etc/pot/pot.conf
 
 fetch_manifests() {
     mkdir -p $manifests
-    for release in $releases; do 
+    for release in $releases; do
         curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > $manifests/arm64-aarch64c-$release-RELEASE
     done
 }
@@ -74,6 +74,7 @@ dsbd_lab_prestart() {
     bootstrap_pkg pkg64
     pkg64 install -fy bash curl git pot potnet
 
+    # Fetch CheriBSD manifests
     releases=`curl -s \
         https://download.cheribsd.org/releases/arm64/aarch64c/ | \
         grep -Eo "\w{1,}\.\w{1,}" | sort -u`
