@@ -49,7 +49,7 @@ install_act() {
     FREEBSD_VERSION="23.11" POT_MOUNT_BASE=/opt/pot ./install.sh
 }
 
-create_image() {
+create_base() {
     if [ ! $(pot list -b | grep -Eo $version_number) ]; then
         pot create-base -r $version_number
     fi
@@ -74,6 +74,12 @@ dsbd_lab_prestart() {
     bootstrap_pkg pkg64
     pkg64 install -fy bash curl git pot potnet
 
+    releases=`curl -s \
+        https://download.cheribsd.org/releases/arm64/aarch64c/ | \
+        grep -Eo "\w{1,}\.\w{1,}" | sort -u`
+    manifests=/usr/local/share/freebsd/MANIFESTS/
+    fetch_manifests
+
     # Install and configure utilities
     configure_pot
     pot init
@@ -86,15 +92,9 @@ dsbd_lab_prestart() {
 
     # Build a base pot
     if [ -z "$(pot ls -b)" ]; then
-        releases=`curl -s \
-            https://download.cheribsd.org/releases/arm64/aarch64c/ | \
-            grep -Eo "\w{1,}\.\w{1,}" | sort -u`
-        manifests=/usr/local/share/freebsd/MANIFESTS/
-        fetch_manifests
-
         regex='[[:digit:]]{1,}\.[[:digit:]]{1,}'
         version_number=$(ls $manifests | tail -n 1 | grep -Eo $regex)
-        create_image
+        create_base
     fi
 }
 
