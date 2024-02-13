@@ -1,0 +1,9 @@
+# sshd_config,v 1.104
+
+AllowAgentForwarding yes
+AuthorizedKeysFile .ssh/authorized_keys
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+PermitRootLogin without-password
+PubkeyAuthentication yes
+UsePAM no

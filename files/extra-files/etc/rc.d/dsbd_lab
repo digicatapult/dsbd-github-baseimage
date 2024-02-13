@@ -58,6 +58,26 @@ create_base() {
     done
 }
 
+create_base_bridge() {
+    pot create-jail-bridge -B $1 -S 256
+    pot vnet-start -B $1
+}
+
+configure_base_sshd() {
+    mkdir -p "$1/root/.ssh/"
+
+    sshd_config="AuthorizedKeysFile .ssh/authorized_keys
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+PermitRootLogin without-password
+PubkeyAuthentication yes
+UsePAM no"
+
+    echo $sshd_config > "$1/etc/ssh/sshd_config"
+
+    echo 'sshd_enable="YES"' >> "$1/etc/rc.conf"
+}
+
 dsbd_lab_prestart() {
     echo "[info] DRL has been started"
 
@@ -92,11 +112,17 @@ dsbd_lab_prestart() {
     ln -s /usr/local64/bin/pot $target
 
     # Build a base pot
+    regex='[[:digit:]]{1,}\.[[:digit:]]{1,}'
+    version_number=$(ls $manifests | tail -n 1 | grep -Eo $regex)
     if [ -z "$(pot ls -b)" ]; then
-        regex='[[:digit:]]{1,}\.[[:digit:]]{1,}'
-        version_number=$(ls $manifests | tail -n 1 | grep -Eo $regex)
         create_base
     fi
+
+    # Create a private bridge per jail
+    create_base_bridge "bridge-$version_number"
+
+    # Configure the jails' SSH daemons
+    configure_base_sshd "/opt/pot/bases/$version_number/"
 }
 
 load_rc_config $name
