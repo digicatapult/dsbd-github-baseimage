@@ -19,8 +19,8 @@ dsbd_lab_enable() {
 }
 
 bootstrap_pkg() {
-    pkg -N || pkg bootstrap -fy
-    pkg install -fy bash curl git pot potnet
+    pkg64 -N || pkg64 bootstrap -fy
+    pkg64 install -fy bash curl git pot potnet
 }
 
 configure_pot() {
