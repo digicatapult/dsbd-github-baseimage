@@ -122,6 +122,10 @@ build {
     source      = "./files/update_qemu_morello_config.sh"
     destination = "/tmp/update_qemu_morello_config.sh"
   }
+  provisioner "file" {
+    source      = "./files/extra-files/"
+    destination = "/tmp/extra-files/"
+  }
   provisioner "shell" {
     execute_command = "chmod +x {{ .Path }}; {{ .Vars }} sudo -E bash '{{ .Path }}'"
     script = "./scripts/install-cheribuild.sh"

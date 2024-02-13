@@ -1,0 +1,129 @@
+#!/bin/sh
+
+# PROVIDE: dsbd_lab
+# REQUIRE: networking syslog
+# REQUIRE: usr
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name=dsbd_lab
+rcvar=dsbd_lab_enable
+pidfile="/var/run/${name}.pid"
+start_precmd="${name}_prestart"
+
+dsbd_lab_enable() {
+    sysrc pot_enable="YES"
+    sysrc gh_actions_enable="YES"
+}
+
+bootstrap_pkg() {
+    for pkg in $@; do
+        $pkg -N || $pkg bootstrap -fy
+    done
+}
+
+configure_pot() {
+    git -C $HOME clone https://github.com/digicatapult/pot
+    cd $HOME/pot
+
+    echo "# pot configuration file
+POT_CACHE=/opt/pot/cache
+POT_EXTIF=vtnet0" > ./etc/pot/pot.conf
+    for dir in bin etc share; do
+        cp -fR ./$dir /usr/local64/
+    done
+}
+
+fetch_manifests() {
+    mkdir -p $manifests
+    for release in $releases; do
+        curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > $manifests/arm64-aarch64c-$release-RELEASE
+    done
+}
+
+install_act() {
+    git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd
+    cd $HOME/act-pot-cheribsd
+
+    FREEBSD_VERSION="23.11" POT_MOUNT_BASE=/opt/pot ./install.sh
+}
+
+create_base() {
+    if [ ! $(pot list -b | grep -Eo $version_number) ]; then
+        pot create-base -r $version_number
+    fi
+    for lib in lib64 lib64cb; do
+        cp -nR /usr/$lib /opt/pot/bases/$version_number/usr/
+    done
+}
+
+create_base_bridge() {
+    pot create-jail-bridge -B $1 -S 256
+    pot vnet-start -B $1
+}
+
+configure_base_sshd() {
+    mkdir -p "$1/root/.ssh/"
+
+    sshd_config="AuthorizedKeysFile .ssh/authorized_keys
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+PermitRootLogin without-password
+PubkeyAuthentication yes
+UsePAM no"
+
+    echo $sshd_config > "$1/etc/ssh/sshd_config"
+
+    echo 'sshd_enable="YES"' >> "$1/etc/rc.conf"
+}
+
+dsbd_lab_prestart() {
+    echo "[info] DRL has been started"
+
+    # Mount block devices
+    echo "[info] initialising DRL; creating ZFS mounts"
+    zpool create -f jailroot vtbd1
+    zfs create -o mountpoint=/opt/pot -o compression=on zroot/pot
+    zfs create -o mountpoint=/opt/pot/jails -o overlay=on \
+        -o compression=on jailroot/jails
+    zfs mount -a
+
+    # Bootstrap pkg and fetch packages
+    echo "[info] bootstrapping pkg and installing dependencies"
+    bootstrap_pkg pkg64
+    pkg64 install -fy bash curl git pot potnet
+
+    # Fetch CheriBSD manifests
+    releases=`curl -s \
+        https://download.cheribsd.org/releases/arm64/aarch64c/ | \
+        grep -Eo "\w{1,}\.\w{1,}" | sort -u`
+    manifests=/usr/local/share/freebsd/MANIFESTS/
+    fetch_manifests
+
+    # Install and configure utilities
+    configure_pot
+    pot init
+    target=/usr/local/bin/pot
+    if [ -f $target ]; then
+        rm $target
+    fi
+    install_act
+    ln -s /usr/local64/bin/pot $target
+
+    # Build a base pot
+    regex='[[:digit:]]{1,}\.[[:digit:]]{1,}'
+    version_number=$(ls $manifests | tail -n 1 | grep -Eo $regex)
+    if [ -z "$(pot ls -b)" ]; then
+        create_base
+    fi
+
+    # Create a private bridge per jail
+    create_base_bridge "bridge-$version_number"
+
+    # Configure the jails' SSH daemons
+    configure_base_sshd "/opt/pot/bases/$version_number/"
+}
+
+load_rc_config $name
+run_rc_command "$@"
