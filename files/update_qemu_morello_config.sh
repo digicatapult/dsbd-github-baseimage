@@ -7,6 +7,7 @@ MIN_CPU_THREADS="${MIN_CPU_THREADS:-1}"   # Minimum number of CPU threads for QE
 CPU_DEDUCTION="${CPU_DEDUCTION:-2}"     # Number of CPUs to reserve for the host, default 2
 KEY_VAULT_NAME="${KEY_VAULT_NAME:-YourKeyVaultName}"  # Default Key Vault name for Azure
 SECRET_NAME="${SECRET_NAME:-GitHubPAT}"               # Default secret name for both Azure and AWS
+GITHUB_ORG="${GITHUB_ORG:-YourGithubOrg}"             # Default GitHub Organization
 SECRET_SOURCE="${SECRET_SOURCE:-azure}"  # Source of the secret: 'azure' or 'aws'
 
 # Logging function
@@ -93,6 +94,8 @@ write_config
 mkdir -p /etc/qemu-morello/smbshare
 PAT=$(fetch_github_pat)
 echo "$PAT" > /etc/qemu-morello/smbshare/github_pat.secret
+echo "$GITHUB_ORG" > /etc/qemu-morello/smbshare/github_org.txt  # Output the GitHub Org to a file
 chmod 600 /etc/qemu-morello/smbshare/github_pat.secret
+chmod 600 /etc/qemu-morello/smbshare/github_org.txt
 chown -R cheri:cheri /etc/qemu-morello/smbshare
-log "GitHub PAT stored securely in smbshare directory."
+log "GitHub PAT and Org stored securely in smbshare directory."

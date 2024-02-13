@@ -36,5 +36,6 @@ write_files:
     SECRET_SOURCE=azure # or aws
     SECRET=github-actions # or the name of the secret in the respective secret store
     KEY_VAULT_NAME=dsbd-github-images # the name of the key vault, only required for Azure
+    GITHUB_ORG=dc-dsbd-test # the name of the github org
   append: true
 ```
