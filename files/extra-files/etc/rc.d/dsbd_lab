@@ -95,6 +95,21 @@ fetch_manifests() {
     echo "[info] Fetched CheriBSD manifests"
 }
 
+configure_base_sshd() {
+    base_dir="/opt/pot/bases/$(echo $releases | tail -n 1)"
+    mkdir -p "$base_dir/root/.ssh/"
+    
+    sshd_config="AuthorizedKeysFile .ssh/authorized_keys
+ChallengeResponseAuthentication no
+PasswordAuthentication no
+PermitRootLogin without-password
+PubkeyAuthentication yes
+UsePAM no"
+    
+    echo "$sshd_config" > "$base_dir/etc/ssh/sshd_config"
+    echo 'sshd_enable="YES"' >> "$base_dir/etc/rc.conf"
+}
+
 dsbd_lab_prestart() {
     check_and_mount_smb
     set_env_vars
@@ -108,6 +123,7 @@ dsbd_lab_prestart() {
     pot init
 
     install_act
+    configure_base_sshd
 }
 
 load_rc_config $name
