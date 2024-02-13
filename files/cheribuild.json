@@ -1,6 +1,9 @@
 {
   "source-root": "/home/cheri/cheri",
   "output-root": "/output",
+  "disk-image": {
+    "extra-files": "/tmp/extra-files"
+  },
   "cheribsd": {
     "source-directory": "/home/cheri/cheri/cheribsd"
   },
