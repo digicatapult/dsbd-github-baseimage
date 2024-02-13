@@ -29,14 +29,20 @@ configure_pot() {
     fi
     cd "$HOME/pot"
 
-    mkdir -p /usr/local/etc/pot
+    mkdir -p /usr/local/etc/pot  # Assuming configuration files still go to /usr/local/etc/pot
     echo "# pot configuration file
 POT_CACHE=/opt/pot/cache
 POT_EXTIF=vtnet0" > /usr/local/etc/pot/pot.conf
 
-    cp -fR ./bin /usr/local/
-    cp -fR ./etc/pot /usr/local/etc/
-    cp -fR ./share /usr/local/
+    # Correctly copying to /usr/local64 for CheriBSD
+    for dir in bin etc share; do
+        # Adjusting the script to check if we're copying 'etc' to maintain the structure
+        if [ "$dir" = "etc" ]; then
+            cp -fR ./$dir/pot /usr/local/etc/
+        else
+            cp -fR ./$dir /usr/local64/
+        fi
+    done
 }
 
 install_act() {
