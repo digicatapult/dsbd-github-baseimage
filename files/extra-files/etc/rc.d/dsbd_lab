@@ -72,16 +72,12 @@ set_env_vars() {
 
     if [ -f "${mount_point}/github_pat.secret" ]; then
         GITHUB_TOKEN=$(cat "${mount_point}/github_pat.secret")
-        if ! grep -q "GITHUB_TOKEN" $env_file; then
-            echo "export GITHUB_TOKEN='${GITHUB_TOKEN}'" >> $env_file
-        fi
+        echo "export GITHUB_TOKEN='${GITHUB_TOKEN}'" >> $env_file
     fi
 
     if [ -f "${mount_point}/github_org.txt" ]; then
         GITHUB_ORG=$(cat "${mount_point}/github_org.txt")
-        if ! grep -q "GITHUB_ORG" $env_file; then
-            echo "export GITHUB_ORG='${GITHUB_ORG}'" >> $env_file
-        fi
+        echo "export GITHUB_ORG='${GITHUB_ORG}'" >> $env_file
     fi
 }
 
@@ -93,6 +89,22 @@ fetch_manifests() {
         curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > "$manifests/arm64-aarch64c-$release-RELEASE"
     done
     echo "[info] Fetched CheriBSD manifests"
+}
+
+create_base() {
+    version_number=$(echo $releases | tail -n 1)
+    if [ ! $(pot list -b | grep -Eo $version_number) ]; then
+        pot create-base -r $version_number
+    fi
+    for lib in lib64 lib64cb; do
+        cp -nR /usr/$lib /opt/pot/bases/$version_number/usr/
+    done
+}
+
+create_base_bridge() {
+    bridge_name="bridge-$(echo $releases | tail -n 1)"
+    pot create-jail-bridge -B $bridge_name -S 256
+    pot vnet-start -B $bridge_name
 }
 
 configure_base_sshd() {
@@ -123,6 +135,8 @@ dsbd_lab_prestart() {
     pot init
 
     install_act
+    create_base
+    create_base_bridge
     configure_base_sshd
 }
 
