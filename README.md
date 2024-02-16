@@ -24,3 +24,18 @@ You will need to provide some vars, namely, the resource group and the subscript
 Run using `packer build .` in the root of the repo.
 
 To only run one of the sources e.g. the aws source, use `packer build -only=amazon-ebs.ubuntu .`
+
+### Retrieving Github Actions PAT from Azure Key Vault or AWS Secrets Manager
+
+The PAT is stored in Azure Key Vault or AWS Secrets Manager.  The PAT is used to authenticate to Github and retrieve a token for registering a self served Github Actions runner.  Using cloudInit please provide the following ENVARS for the `update_qemu_morello_config.sh` script to retrieve the PAT from the respective secret store.  We suggest using cloudinit to write the environment variables to `/etc/environment` so that they are available to the `update_qemu_morello_config.sh` script.
+
+```yaml
+write_files:
+- path: /etc/environment
+  content: |
+    SECRET_SOURCE=azure # or aws
+    SECRET_NAME=github-actions # or the name of the secret in the respective secret store
+    KEY_VAULT_NAME=dsbd-github-images # the name of the key vault, only required for Azure
+    GITHUB_ORG=dc-dsbd-test # the name of the github org
+  append: true
+```

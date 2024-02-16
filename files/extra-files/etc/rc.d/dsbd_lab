@@ -1,16 +1,17 @@
 #!/bin/sh
 
 # PROVIDE: dsbd_lab
-# REQUIRE: networking syslog
-# REQUIRE: usr
+# REQUIRE: networking syslog usr
 # KEYWORD: shutdown
 
 . /etc/rc.subr
 
-name=dsbd_lab
-rcvar=dsbd_lab_enable
-pidfile="/var/run/${name}.pid"
-start_precmd="${name}_prestart"
+name="dsbd_lab"
+rcvar="dsbd_lab_enable"
+start_precmd="dsbd_lab_prestart"
+
+mount_point="/mnt/qemu_smb"
+smb_share="//10.0.2.4/qemu"
 
 dsbd_lab_enable() {
     sysrc pot_enable="YES"
@@ -18,38 +19,86 @@ dsbd_lab_enable() {
 }
 
 bootstrap_pkg() {
-    for pkg in $@; do
-        $pkg -N || $pkg bootstrap -fy
-    done
+    pkg64 -N || pkg64 bootstrap -fy
+    pkg64 install -fy bash curl git pot potnet
 }
 
 configure_pot() {
-    git -C $HOME clone https://github.com/digicatapult/pot
-    cd $HOME/pot
+    if [ ! -d "$HOME/pot" ]; then
+        git -C "$HOME" clone https://github.com/digicatapult/pot
+    fi
+    cd "$HOME/pot"
 
+    mkdir -p /usr/local/etc/pot  # Assuming configuration files still go to /usr/local/etc/pot
     echo "# pot configuration file
 POT_CACHE=/opt/pot/cache
-POT_EXTIF=vtnet0" > ./etc/pot/pot.conf
-    for dir in bin etc share; do
-        cp -fR ./$dir /usr/local64/
-    done
-}
+POT_EXTIF=vtnet0" > /usr/local/etc/pot/pot.conf
 
-fetch_manifests() {
-    mkdir -p $manifests
-    for release in $releases; do
-        curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > $manifests/arm64-aarch64c-$release-RELEASE
+    # Correctly copying to /usr/local64 for CheriBSD
+    for dir in bin etc share; do
+        # Adjusting the script to check if we're copying 'etc' to maintain the structure
+        if [ "$dir" = "etc" ]; then
+            cp -fR ./$dir/pot /usr/local/etc/
+        else
+            cp -fR ./$dir /usr/local64/
+        fi
     done
 }
 
 install_act() {
-    git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd
-    cd $HOME/act-pot-cheribsd
-
+    if [ ! -d "$HOME/act-pot-cheribsd" ]; then
+        git -C "$HOME" clone https://github.com/digicatapult/act-pot-cheribsd --branch feature/dynamic-tokens
+    fi
+    cd "$HOME/act-pot-cheribsd"
     FREEBSD_VERSION="23.11" POT_MOUNT_BASE=/opt/pot ./install.sh
 }
 
+setup_zfs() {
+    if ! zpool list | grep -q "jailroot"; then
+        zpool create -f jailroot vtbd1
+    fi
+
+    zfs list | grep -q "/opt/pot" || zfs create -o mountpoint=/opt/pot -o compression=on zroot/pot
+    zfs list | grep -q "/opt/pot/jails" || zfs create -o mountpoint=/opt/pot/jails -o overlay=on -o compression=on jailroot/jails
+    zfs mount -a
+}
+
+check_and_mount_smb() {
+    if ! mount | grep -q "on ${mount_point} "; then
+        mkdir -p ${mount_point}
+        mount_smbfs -o ro ${smb_share} ${mount_point} || {
+            echo "[error] Failed to mount ${smb_share} on ${mount_point}"
+            return 1
+        }
+    fi
+}
+
+set_env_vars() {
+    env_file="$HOME/.profile"
+
+    if [ -f "${mount_point}/github_pat.secret" ]; then
+        GITHUB_TOKEN=$(cat "${mount_point}/github_pat.secret")
+        echo "export GITHUB_TOKEN='${GITHUB_TOKEN}'" >> $env_file
+    fi
+
+    if [ -f "${mount_point}/github_org.txt" ]; then
+        GITHUB_ORG=$(cat "${mount_point}/github_org.txt")
+        echo "export GITHUB_ORG='${GITHUB_ORG}'" >> $env_file
+    fi
+}
+
+fetch_manifests() {
+    manifests="$HOME/MANIFESTS"
+    mkdir -p $manifests
+    releases=$(curl -s "https://download.cheribsd.org/releases/arm64/aarch64c/" | grep -Eo "\w{1,}\.\w{1,}" | sort -u)
+    for release in $releases; do
+        curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > "$manifests/arm64-aarch64c-$release-RELEASE"
+    done
+    echo "[info] Fetched CheriBSD manifests"
+}
+
 create_base() {
+    version_number=$(echo $releases | tail -n 1)
     if [ ! $(pot list -b | grep -Eo $version_number) ]; then
         pot create-base -r $version_number
     fi
@@ -59,70 +108,42 @@ create_base() {
 }
 
 create_base_bridge() {
-    pot create-jail-bridge -B $1 -S 256
-    pot vnet-start -B $1
+    bridge_name="bridge-$(echo $releases | tail -n 1)"
+    pot create-private-bridge -B $bridge_name -S 256
+    pot vnet-start -B $bridge_name
 }
 
 configure_base_sshd() {
-    mkdir -p "$1/root/.ssh/"
-
+    base_dir="/opt/pot/bases/$(echo $releases | tail -n 1)"
+    mkdir -p "$base_dir/root/.ssh/"
+    
     sshd_config="AuthorizedKeysFile .ssh/authorized_keys
 ChallengeResponseAuthentication no
 PasswordAuthentication no
 PermitRootLogin without-password
 PubkeyAuthentication yes
 UsePAM no"
-
-    echo $sshd_config > "$1/etc/ssh/sshd_config"
-
-    echo 'sshd_enable="YES"' >> "$1/etc/rc.conf"
+    
+    echo "$sshd_config" > "$base_dir/etc/ssh/sshd_config"
+    echo 'sshd_enable="YES"' >> "$base_dir/etc/rc.conf"
 }
 
 dsbd_lab_prestart() {
-    echo "[info] DRL has been started"
+    check_and_mount_smb
+    set_env_vars
 
-    # Mount block devices
-    echo "[info] initialising DRL; creating ZFS mounts"
-    zpool create -f jailroot vtbd1
-    zfs create -o mountpoint=/opt/pot -o compression=on zroot/pot
-    zfs create -o mountpoint=/opt/pot/jails -o overlay=on \
-        -o compression=on jailroot/jails
-    zfs mount -a
+    setup_zfs
 
-    # Bootstrap pkg and fetch packages
-    echo "[info] bootstrapping pkg and installing dependencies"
-    bootstrap_pkg pkg64
-    pkg64 install -fy bash curl git pot potnet
-
-    # Fetch CheriBSD manifests
-    releases=`curl -s \
-        https://download.cheribsd.org/releases/arm64/aarch64c/ | \
-        grep -Eo "\w{1,}\.\w{1,}" | sort -u`
-    manifests=/usr/local/share/freebsd/MANIFESTS/
+    bootstrap_pkg
     fetch_manifests
 
-    # Install and configure utilities
     configure_pot
     pot init
-    target=/usr/local/bin/pot
-    if [ -f $target ]; then
-        rm $target
-    fi
+
     install_act
-    ln -s /usr/local64/bin/pot $target
-
-    # Build a base pot
-    regex='[[:digit:]]{1,}\.[[:digit:]]{1,}'
-    version_number=$(ls $manifests | tail -n 1 | grep -Eo $regex)
-    if [ -z "$(pot ls -b)" ]; then
-        create_base
-    fi
-
-    # Create a private bridge per jail
-    create_base_bridge "bridge-$version_number"
-
-    # Configure the jails' SSH daemons
-    configure_base_sshd "/opt/pot/bases/$version_number/"
+    create_base
+    create_base_bridge
+    configure_base_sshd
 }
 
 load_rc_config $name
