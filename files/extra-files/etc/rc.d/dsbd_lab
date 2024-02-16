@@ -50,7 +50,7 @@ install_act() {
         git -C "$HOME" clone https://github.com/digicatapult/act-pot-cheribsd --branch feature/dynamic-tokens
     fi
     cd "$HOME/act-pot-cheribsd"
-    ./install.sh FREEBSD_VERSION="23.11" POT_MOUNT_BASE=/opt/pot
+    FREEBSD_VERSION="23.11" POT_MOUNT_BASE=/opt/pot ./install.sh
 }
 
 setup_zfs() {
