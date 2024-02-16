@@ -47,7 +47,7 @@ POT_EXTIF=vtnet0" > /usr/local/etc/pot/pot.conf
 
 install_act() {
     if [ ! -d "$HOME/act-pot-cheribsd" ]; then
-        git -C "$HOME" clone https://github.com/digicatapult/act-pot-cheribsd
+        git -C "$HOME" clone https://github.com/digicatapult/act-pot-cheribsd --branch feature/dynamic-tokens
     fi
     cd "$HOME/act-pot-cheribsd"
     ./install.sh FREEBSD_VERSION="23.11" POT_MOUNT_BASE=/opt/pot
@@ -109,7 +109,7 @@ create_base() {
 
 create_base_bridge() {
     bridge_name="bridge-$(echo $releases | tail -n 1)"
-    pot create-jail-bridge -B $bridge_name -S 256
+    pot create-private-bridge -B $bridge_name -S 256
     pot vnet-start -B $bridge_name
 }
 

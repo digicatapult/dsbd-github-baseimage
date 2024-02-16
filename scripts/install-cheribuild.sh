@@ -14,19 +14,35 @@ ZFS_GROUP="disk"  # or another appropriate group
 
 echo "Configuration variables set."
 
-# Function to install dependencies including ZFS
 install_deps() {
     echo "Installing dependencies..."
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf automake libtool pkg-config \
-    git clang bison cmake mercurial ninja-build samba flex texinfo \
+    git clang bison lld cmake mercurial ninja-build samba flex texinfo \
     time libglib2.0-dev libpixman-1-dev libarchive-dev libarchive-tools \
     libbz2-dev libattr1-dev libcap-ng-dev libexpat1-dev libgmp-dev \
     zfsutils-linux  # Add this line to install ZFS utilities
     echo "Dependencies installation complete."
 }
 
-# Function to determine paths of ZFS commands
+# Additional function to install AWS CLI for ARM64
+install_aws_cli() {
+    echo "Installing AWS CLI for ARM64..."
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+    rm awscliv2.zip
+    rm -rf aws
+    echo "AWS CLI installation complete."
+}
+
+# Additional function to install Azure CLI
+install_azure_cli() {
+    echo "Installing Azure CLI..."
+    curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+    echo "Azure CLI installation complete."
+}
+
 determine_zfs_paths() {
     local zfs_cmds=("zfs" "zpool" "zdb" "zdump" "ztest")
     local paths=()
@@ -39,11 +55,9 @@ determine_zfs_paths() {
         fi
     done
 
-    # Only output the paths, nothing else
     echo "${paths[@]}"
 }
 
-# Function to configure sudoers for ZFS commands
 configure_sudoers_for_zfs() {
     local paths
     paths=($(determine_zfs_paths))
@@ -53,7 +67,6 @@ configure_sudoers_for_zfs() {
         sudo_cmds+="$path *, "
     done
 
-    # Remove trailing comma and space
     sudo_cmds=${sudo_cmds%, }
 
     echo "Configuring sudoers for ZFS commands..."
@@ -61,26 +74,23 @@ configure_sudoers_for_zfs() {
     echo "Sudoers configuration for ZFS commands complete."
 }
 
-# Function to create a user, setup directories, and configure ZFS permissions
 setup_user_and_zfs_permissions() {
     echo "Setting up user and ZFS permissions..."
     useradd -m -s /bin/bash "$CHERI_USER"
     mkdir -p "$CHERI_HOME/.config"
     mkdir -p "$CHERI_HOME/cheri"
+    cp -r /tmp/extra-files/ "$CHERI_HOME/cheri/"
     mkdir -p "$OUTPUT_DIR"
     cp /tmp/cheribuild.json "$CHERI_HOME/.config/cheribuild.json"
     chown -R "$CHERI_USER:$CHERI_USER" "$CHERI_HOME"
     chown -R "$CHERI_USER:$CHERI_USER" "$OUTPUT_DIR"
 
-    # Add cheri user to the necessary group for ZFS management
     usermod -aG "$ZFS_GROUP" "$CHERI_USER"
 
-    # Configure sudoers for ZFS commands
     configure_sudoers_for_zfs
     echo "User setup and ZFS permissions configuration complete."
 }
 
-# Function to clone and setup CHERI QEMU as cheri user
 install_qemu() {
     echo "Installing CHERI QEMU..."
     runuser -l "$CHERI_USER" -c "git clone -b \"$QEMU_BRANCH\" --single-branch \"$QEMU_REPO\" \"$CHERI_HOME/cheri/qemu\""
@@ -88,7 +98,6 @@ install_qemu() {
     echo "CHERI QEMU installation complete."
 }
 
-# Function to clone and setup Cheribuild as cheri user
 install_cheribuild() {
     echo "Installing Cheribuild..."
     runuser -l "$CHERI_USER" -c "git clone \"$CHERIBUILD_REPO\" \"$CHERI_HOME/cheri/cheribuild\""
@@ -99,6 +108,8 @@ install_cheribuild() {
 # Main script execution
 echo "Beginning main script execution..."
 install_deps
+install_aws_cli
+install_azure_cli
 setup_user_and_zfs_permissions
 install_qemu
 install_cheribuild
