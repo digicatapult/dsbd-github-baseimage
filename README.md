@@ -30,6 +30,7 @@ To only run one of the sources e.g. the aws source, use `packer build -only=amaz
 The PAT is stored in Azure Key Vault or AWS Secrets Manager.  The PAT is used to authenticate to Github and retrieve a token for registering a self served Github Actions runner.  Using cloudInit please provide the following ENVARS for the `update_qemu_morello_config.sh` script to retrieve the PAT from the respective secret store.  We suggest using cloudinit to write the environment variables to `/etc/environment` so that they are available to the `update_qemu_morello_config.sh` script.
 
 ```yaml
+#cloud-config
 write_files:
 - path: /etc/environment
   content: |
