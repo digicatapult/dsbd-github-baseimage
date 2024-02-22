@@ -8,10 +8,6 @@ packer {
       source  = "github.com/hashicorp/amazon"
       version = "~> 1"
     }
-    qemu = {
-      source  = "github.com/hashicorp/qemu"
-      version = "~> 1"
-    }
   }
 }
 
@@ -123,7 +119,7 @@ build {
     destination = "/tmp/update_qemu_morello_config.sh"
   }
   provisioner "file" {
-    source      = "./files/extra-files/"
+    source      = "./files/extra-files"
     destination = "/tmp/extra-files/"
   }
   provisioner "shell" {

@@ -65,12 +65,22 @@ write_config() {
     log "QEMU Morello service configuration updated successfully."
 }
 
+# Function to Login using an Azure Managed Identity
+handle_azure_login() {
+    # Login using Managed Identity
+    az login --identity --allow-no-subscriptions
+    if [ $? -ne 0 ]; then
+        handle_error "Azure login failed."
+    fi
+}
+
 # Function to fetch GitHub PAT from Azure Key Vault or AWS Secrets Manager
 fetch_github_pat() {
     check_cli_tools  # Ensure CLI tools are available
 
     local pat=""
     if [ "$SECRET_SOURCE" == "azure" ]; then
+        handle_azure_login
         pat=$(az keyvault secret show --name "$SECRET_NAME" --vault-name "$KEY_VAULT_NAME" --query value -o tsv)
     elif [ "$SECRET_SOURCE" == "aws" ]; then
         pat=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text)
