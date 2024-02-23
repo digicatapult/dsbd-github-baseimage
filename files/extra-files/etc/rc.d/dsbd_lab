@@ -36,10 +36,12 @@ configure_pot() {
         cp -fR ./$dir /usr/local64/
     done
 
-    # Enable the virtual NIC
+    # Enable the virtual NIC, basic logging, and VNET isolation
     echo "# pot configuration file
 POT_CACHE=/opt/pot/cache
-POT_EXTIF=vtnet0" > /usr/local64/etc/pot/pot.conf
+POT_EXTIF=vtnet0
+POT_ISOLATE_VNET_POTS=true
+POT_LOG_FACILITY=local2" > /usr/local64/etc/pot/pot.conf
 
     /usr/local64/bin/pot init
 
