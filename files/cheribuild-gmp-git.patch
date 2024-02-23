@@ -1,5 +1,5 @@
 diff --git a/pycheribuild/projects/cross/gmp.py b/pycheribuild/projects/cross/gmp.py
-index 2b7c8467..5c9c207b 100644
+index 8c476339..9f81b2c1 100644
 --- a/pycheribuild/projects/cross/gmp.py
 +++ b/pycheribuild/projects/cross/gmp.py
 @@ -24,12 +24,12 @@
@@ -14,6 +14,6 @@ index 2b7c8467..5c9c207b 100644
  class BuildGmp(CrossCompileAutotoolsProject):
 -    repository = MercurialRepository("https://gmplib.org/repo/gmp")
 +    repository = GitRepository("https://github.com/gmp-mirror/gmp")
-     supported_architectures = (CompilationTargets.ALL_CHERIBSD_TARGETS_WITH_HYBRID +
-                                CompilationTargets.ALL_CHERIBSD_HYBRID_FOR_PURECAP_ROOTFS_TARGETS +
-                                CompilationTargets.ALL_SUPPORTED_FREEBSD_TARGETS + CompilationTargets.ALL_NATIVE)
+     supported_architectures = (
+         CompilationTargets.ALL_CHERIBSD_TARGETS_WITH_HYBRID
+         + CompilationTargets.ALL_CHERIBSD_HYBRID_FOR_PURECAP_ROOTFS_TARGETS
