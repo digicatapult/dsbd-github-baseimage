@@ -73,7 +73,7 @@ setup_zfs() {
 check_and_mount_smb() {
     if ! mount | grep -q "on ${mount_point} "; then
         mkdir -p ${mount_point}
-        mount_smbfs -o ro ${smb_share} ${mount_point} || {
+        mount_smbfs -o ro -I 10.0.2.4 -N ${smb_share} ${mount_point} || {
             echo "[error] Failed to mount ${smb_share} on ${mount_point}"
             return 1
         }

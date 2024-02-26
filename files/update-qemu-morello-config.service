@@ -1,6 +1,6 @@
 [Unit]
 Description=Update QEMU Morello Configuration
-After=network.target
+After=network.target cloud-final.service cloud-config.service cloud-init.service cloud-init-local.service
 
 [Service]
 Type=oneshot

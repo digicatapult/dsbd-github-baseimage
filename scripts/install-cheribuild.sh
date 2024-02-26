@@ -18,7 +18,7 @@ install_deps() {
     echo "Installing dependencies..."
     apt-get update
     DEBIAN_FRONTEND=noninteractive apt-get install -y autoconf automake libtool pkg-config \
-    git clang bison lld cmake mercurial ninja-build samba flex texinfo \
+    git clang bison cmake mercurial ninja-build samba flex texinfo \
     time libglib2.0-dev libpixman-1-dev libarchive-dev libarchive-tools \
     libbz2-dev libattr1-dev libcap-ng-dev libexpat1-dev libgmp-dev unzip \
     zfsutils-linux  # Add this line to install ZFS utilities
