@@ -1,7 +1,7 @@
 [Unit]
 Description=QEMU Morello Service
-Wants=network-online.target update-qemu-morello-config.service
-After=network-online.target update-qemu-morello-config.service
+After=update-qemu-morello-config.service
+Requires=update-qemu-morello-config.service
 
 [Service]
 Type=simple
