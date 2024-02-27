@@ -99,7 +99,6 @@ fetch_github_pat() {
 
 # Main execution
 log "Updating QEMU Morello service configuration..."
-mkdir -p /etc/sysconfig/  # Create the config directory if it doesn't exist
 write_config
 # Fetch GitHub PAT and write to a secure location in the smbshare subdirectory
 mkdir -p /etc/qemu-morello/smbshare

@@ -32,7 +32,7 @@ The PAT is stored in Azure Key Vault or AWS Secrets Manager.  The PAT is used to
 ```yaml
 #cloud-config
 write_files:
-- path: /etc/environment
+- path: /etc/sysconfig/update-qemu-morello-config.conf
   content: |
     SECRET_SOURCE=azure # or aws
     SECRET_NAME=github-actions # or the name of the secret in the respective secret store
