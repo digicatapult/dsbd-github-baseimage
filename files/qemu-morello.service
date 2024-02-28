@@ -1,8 +1,7 @@
 [Unit]
 Description=QEMU Morello Service
 After=update-qemu-morello-config.service
-Requires=update-qemu-morello-config.service
-
+Wants=update-qemu-morello-config.service
 [Service]
 Type=simple
 User=cheri
@@ -24,4 +23,4 @@ StandardOutput=append:/var/log/qemu-morello.log
 StandardError=inherit
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=cloud-init.target
