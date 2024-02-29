@@ -50,8 +50,7 @@ POT_LOG_FACILITY=local2" > /usr/local64/etc/pot/pot.conf
 install_act() {
     if [ ! -d "$HOME/act-pot-cheribsd" ]; then
         git -C $HOME \
-            clone https://github.com/digicatapult/act-pot-cheribsd \
-            --branch feature/dynamic-tokens
+            clone https://github.com/digicatapult/act-pot-cheribsd
     fi
     cd $HOME/act-pot-cheribsd
     # Install runner scripts/flavours
@@ -72,7 +71,7 @@ setup_zfs() {
 check_and_mount_smb() {
     if ! mount | grep -q "on ${mount_point} "; then
         mkdir -p ${mount_point}
-        mount_smbfs -o ro ${smb_share} ${mount_point} || {
+        mount_smbfs -o ro -I 10.0.2.4 -N ${smb_share} ${mount_point} || {
             echo "[error] Failed to mount ${smb_share} on ${mount_point}"
             return 1
         }

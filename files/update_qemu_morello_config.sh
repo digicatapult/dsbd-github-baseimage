@@ -81,30 +81,35 @@ fetch_github_pat() {
     local pat=""
     if [ "$SECRET_SOURCE" == "azure" ]; then
         handle_azure_login
-        pat=$(az keyvault secret show --name "$SECRET_NAME" --vault-name "$KEY_VAULT_NAME" --query value -o tsv)
+        if pat=$(az keyvault secret show --name "$SECRET_NAME" --vault-name "$KEY_VAULT_NAME" --query value -o tsv 2>/dev/null); then
+            log "GitHub PAT fetched successfully from Azure."
+        else
+            handle_error "Failed to fetch GitHub PAT from Azure."
+            return 1
+        fi
     elif [ "$SECRET_SOURCE" == "aws" ]; then
-        pat=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text)
+        if pat=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text 2>/dev/null); then
+            log "GitHub PAT fetched successfully from AWS."
+        else
+            handle_error "Failed to fetch GitHub PAT from AWS."
+            return 1
+        fi
     else
         handle_error "Invalid SECRET_SOURCE specified. Must be 'azure' or 'aws'."
+        return 1
     fi
 
-    if [[ -z "$pat" ]]; then
-        handle_error "Failed to fetch GitHub PAT from $SECRET_SOURCE."
-    else
-        log "GitHub PAT fetched successfully from $SECRET_SOURCE."
-    fi
-
-    echo "$pat"
+    # Assuming at this point $pat is not empty and contains the valid token
+    echo "$pat" > /etc/qemu-morello/smbshare/github_pat.secret
+    log "GitHub PAT written to /etc/qemu-morello/smbshare/github_pat.secret"
 }
 
 # Main execution
 log "Updating QEMU Morello service configuration..."
-mkdir -p /etc/sysconfig/  # Create the config directory if it doesn't exist
 write_config
 # Fetch GitHub PAT and write to a secure location in the smbshare subdirectory
 mkdir -p /etc/qemu-morello/smbshare
-PAT=$(fetch_github_pat)
-echo "$PAT" > /etc/qemu-morello/smbshare/github_pat.secret
+fetch_github_pat
 echo "$GITHUB_ORG" > /etc/qemu-morello/smbshare/github_org.txt  # Output the GitHub Org to a file
 chmod 600 /etc/qemu-morello/smbshare/github_pat.secret
 chmod 600 /etc/qemu-morello/smbshare/github_org.txt

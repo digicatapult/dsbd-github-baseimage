@@ -1,11 +1,12 @@
 [Unit]
 Description=Update QEMU Morello Configuration
-After=network.target
+After=cloud-final.service
 
 [Service]
 Type=oneshot
+EnvironmentFile=/etc/sysconfig/update-qemu-morello-config.conf
 ExecStart=/usr/local/bin/update_qemu_morello_config.sh
 RemainAfterExit=yes
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=cloud-init.target

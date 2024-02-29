@@ -76,6 +76,20 @@ convert_to_qcow2() {
 
 # Function to set up systemd QEMU service
 setup_systemd_service() {
+    echo "Setting up systemd QEMU configuration updater service..."
+    if [ -f "$UPDATER_SRC" ]; then
+        cp "$UPDATER_SRC" "$UPDATER_FILE"
+        cp "$UPDATER_SCRIPT_SRC" "$UPDATER_SCRIPT"
+        chmod +x "$UPDATER_SCRIPT"
+        mkdir -p /etc/sysconfig/  # Create the config directory if it doesn't exist
+        touch /etc/sysconfig/update-qemu-morello-config.conf  # Create the config file if it doesn't exist
+        systemctl daemon-reload
+        systemctl enable update-qemu-morello-config.service
+        echo "Systemd update-qemu-morello-config service setup complete."
+    else
+        echo "Service unit file ($UPDATER_SRC) or Service script ($UPDATER_SCRIPT_SRC) not found."
+        exit 1
+    fi
     echo "Setting up systemd QEMU service..."
     if [ -f "$SERVICE_SRC" ]; then
         cp "$SERVICE_SRC" "$SERVICE_FILE"
@@ -84,18 +98,6 @@ setup_systemd_service() {
         echo "Systemd qemu-morello service setup complete."
     else
         echo "Service unit file ($SERVICE_SRC) not found."
-        exit 1
-    fi
-    echo "Setting up systemd QEMU configuration updater service..."
-    if [ -f "$UPDATER_SRC" ]; then
-        cp "$UPDATER_SRC" "$UPDATER_FILE"
-        cp "$UPDATER_SCRIPT_SRC" "$UPDATER_SCRIPT"
-        chmod +x "$UPDATER_SCRIPT"
-        systemctl daemon-reload
-        systemctl enable update-qemu-morello-config.service
-        echo "Systemd update-qemu-morello-config service setup complete."
-    else
-        echo "Service unit file ($UPDATER_SRC) or Service script ($UPDATER_SCRIPT_SRC) not found."
         exit 1
     fi
 }
