@@ -25,11 +25,10 @@ bootstrap_pkg() {
 }
 
 configure_pot() {
-    if [ ! -d "/root/pot" ]; then
-        /usr/local64/bin/git -C /root \
-            clone https://github.com/digicatapult/pot
+    if [ ! -d "$HOME/pot" ]; then
+        git -C $HOME clone https://github.com/digicatapult/pot
     fi
-    cd /root/pot
+    cd $HOME/pot
 
     # Copy to /usr/local64 for the hybrid ABI port
     for dir in bin etc share; do
@@ -43,18 +42,18 @@ POT_EXTIF=vtnet0
 POT_ISOLATE_VNET_POTS=true
 POT_LOG_FACILITY=local2" > /usr/local64/etc/pot/pot.conf
 
-    /usr/local64/bin/pot init
+    pot init
 
     echo "Finished configuring Pot"
 }
 
 install_act() {
-    if [ ! -d "/root/act-pot-cheribsd" ]; then
-        /usr/local64/bin/git -C /root \
+    if [ ! -d "$HOME/act-pot-cheribsd" ]; then
+        git -C $HOME \
             clone https://github.com/digicatapult/act-pot-cheribsd \
             --branch feature/dynamic-tokens
     fi
-    cd /root/act-pot-cheribsd
+    cd $HOME/act-pot-cheribsd
     # Install runner scripts/flavours
     ./install.sh
 }
@@ -81,7 +80,10 @@ check_and_mount_smb() {
 }
 
 set_env_vars() {
-    env_file="/root/.profile"
+    export PATH=$PATH:/usr/local64/bin
+    export HOME=/root
+
+    env_file="$HOME/.profile"
 
     # Add secrets via Samba/SMB mount
     if [ -f "${mount_point}/github_pat.secret" ]; then
@@ -98,11 +100,11 @@ set_env_vars() {
 fetch_manifests() {
     manifests="/usr/local/share/freebsd/MANIFESTS"
     mkdir -p $manifests
-    releases=$(/usr/local64/bin/curl -s "https://download.cheribsd.org/releases/arm64/aarch64c/" | grep -Eo "\w{1,}\.\w{1,}" | sort -u)
+    releases=$(curl -s "https://download.cheribsd.org/releases/arm64/aarch64c/" | grep -Eo "\w{1,}\.\w{1,}" | sort -u)
 
     # Create a set of valid CheriBSD releases
     for release in $releases; do
-        /usr/local64/bin/curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > "$manifests/arm64-aarch64c-$release-RELEASE"
+        curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > "$manifests/arm64-aarch64c-$release-RELEASE"
     done
 
     echo "Fetched CheriBSD manifests"
@@ -121,8 +123,8 @@ create_base() {
     base_name=$(get_latest_version)
 
     # Create a base pot for the latest aarch64c release
-    if [ ! $(/usr/local64/bin/pot list -b | grep -Eo '$base_name') ]; then
-        /usr/local64/bin/pot create-base -r $base_name
+    if [ ! $(pot list -b | grep -Eo '$base_name') ]; then
+        pot create-base -r $base_name
     fi
 
     # Copy libraries for the hybrid and benchmark ABIs
@@ -135,8 +137,8 @@ create_base_bridge() {
     bridge_name="bridge-"$(get_latest_version)
 
     # Create a private VNET for the release
-    /usr/local64/bin/pot create-private-bridge -B $bridge_name -S 256
-    /usr/local64/bin/pot vnet-start -B $bridge_name
+    pot create-private-bridge -B $bridge_name -S 256
+    pot vnet-start -B $bridge_name
 }
 
 configure_base_sshd() {
