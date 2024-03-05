@@ -16,7 +16,7 @@ ExecStart=/output/sdk/bin/qemu-system-morello \
     -drive if=none,file=/output/jailroot-disk.zfs.qcow2,id=drv1,format=qcow2 \
     -device virtio-blk-pci,drive=drv1 \
     -device virtio-net-pci,netdev=net0 \
-    -netdev 'user,id=net0,hostfwd=tcp::10005-:22,smb=/etc/qemu-morello/smbshare<<<smbshare@ro'
+    -netdev 'user,id=net0,hostfwd=tcp::10005-:22,smb=/etc/qemu-morello/smbshare<<<smbshare@rw'
 ExecStop=/bin/kill $MAINPID
 Restart=on-failure
 StandardOutput=append:/var/log/qemu-morello.log
