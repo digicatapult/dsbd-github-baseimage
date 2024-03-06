@@ -40,3 +40,22 @@ write_files:
     GITHUB_ORG=dc-dsbd-test
   append: true
 ```
+
+### Accessing the QEMU guest
+
+We recommend you access the QEMU guest by using ssh.  Firstly you will need to establish a tunnel to the Ubuntu host via a bastion, in Azure this can be achieved with the following command:
+
+```sh
+az network bastion tunnel --resource-group <resource-group> --name <bastion-name> --target-resource-id <resource ID of the VM or the VMSS instance ID you wish to access> --resource-port 22 --port 2022
+```
+Secondly you will need to ssh to the ubuntu host using ssh-agent forwarding, this can be achieved with the following command:
+
+```sh
+ssh -A -p 2022 <username>@localhost
+```
+
+Once you have access to the ubuntu host you can ssh to the QEMU guest using the following command:
+
+```sh
+ssh -p 10005 root@localhost
+```
