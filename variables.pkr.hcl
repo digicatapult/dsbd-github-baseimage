@@ -122,6 +122,10 @@ variable "os_disk_size_gb" {
   type        = number
   default     = 128
 }
+variable "ssh_public_key" {
+  description = "The SSH key to login to the qemu guests"
+  type        = string
+}
 variable "ssh_username" {
   description = "The username for SSH access"
   type        = string

@@ -111,6 +111,10 @@ build {
     destination = "/tmp/qemu-morello.service"
   }
   provisioner "file" {
+    content     = "${var.ssh_public_key}"
+    destination = "/tmp/dsbd_labs.pub"
+  }
+  provisioner "file" {
     source      = "./files/update-qemu-morello-config.service"
     destination = "/tmp/update-qemu-morello-config.service"
   }
