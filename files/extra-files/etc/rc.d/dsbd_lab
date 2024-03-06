@@ -11,6 +11,7 @@ rcvar="dsbd_lab_enable"
 start_cmd="dsbd_lab_start"
 
 mount_point="/mnt"
+smb_share="//10.0.2.4/qemu"
 
 enable_runners() {
     # Enable the packages' rc.d scripts
@@ -65,6 +66,16 @@ setup_zfs() {
     zfs list | grep -q "/opt/pot/jails" || zfs create -o mountpoint=/opt/pot/jails -o overlay=on -o compression=on jailroot/jails
     zfs mount -a
     zpool upgrade zroot
+}
+
+check_and_mount_smb() {
+    if ! mount | grep -q "on ${mount_point} "; then
+        mkdir -p ${mount_point}
+        mount_smbfs -o rw -I 10.0.2.4 -N ${smb_share} ${mount_point} || {
+            echo "[error] Failed to mount ${smb_share} on ${mount_point}"
+            return 1
+        }
+    fi
 }
 
 set_env_vars() {
@@ -148,6 +159,7 @@ UsePAM no"
 }
 
 dsbd_lab_start() {
+    check_and_mount_smb
     set_env_vars
 
     setup_zfs
