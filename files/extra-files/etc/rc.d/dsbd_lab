@@ -20,13 +20,13 @@ enable_runners() {
 }
 
 bootstrap_pkg() {
-    pkg64 -N || pkg64 bootstrap -y
-    pkg64 install -y curl git pot
+    pkg64 -N > /dev/null || pkg64 bootstrap -y > /dev/null
+    pkg64 install -y curl git pot > /dev/null
 }
 
 configure_pot() {
     if [ ! -d "$HOME/pot" ]; then
-        git -C $HOME clone https://github.com/digicatapult/pot
+        git -C $HOME clone https://github.com/digicatapult/pot --no-progress
     fi
     cd $HOME/pot
 
@@ -49,8 +49,7 @@ POT_LOG_FACILITY=local2" > /usr/local64/etc/pot/pot.conf
 
 install_act() {
     if [ ! -d "$HOME/act-pot-cheribsd" ]; then
-        git -C $HOME \
-            clone https://github.com/digicatapult/act-pot-cheribsd
+        git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd --no-progress
     fi
     cd $HOME/act-pot-cheribsd
     # Install runner scripts/flavours
@@ -99,11 +98,11 @@ set_env_vars() {
 fetch_manifests() {
     manifests="/usr/local/share/freebsd/MANIFESTS"
     mkdir -p $manifests
-    releases=$(curl -s "https://download.cheribsd.org/releases/arm64/aarch64c/" | grep -Eo "\w{1,}\.\w{1,}" | sort -u)
+    releases=$(curl -sS "https://download.cheribsd.org/releases/arm64/aarch64c/" | grep -Eo "\w{1,}\.\w{1,}" | sort -u)
 
     # Create a set of valid CheriBSD releases
     for release in $releases; do
-        curl -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > "$manifests/arm64-aarch64c-$release-RELEASE"
+        curl -sS -C - "https://download.cheribsd.org/releases/arm64/aarch64c/$release/ftp/MANIFEST" > "$manifests/arm64-aarch64c-$release-RELEASE"
     done
 
     echo "Fetched CheriBSD manifests"
