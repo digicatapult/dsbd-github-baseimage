@@ -157,6 +157,22 @@ UsePAM no"
     echo "Finished configuring the base pot"
 }
 
+start_pots() {
+    count=0
+    max=3
+    . "$HOME/.profile"
+    cd "$HOME/act-pot-cheribsd"
+    echo "Configuring GitHub Actions runners"
+    while [ "$count" -lt "$max"]
+    do
+        echo "Configuring runner $((count+1))"
+        ./config.sh --url https://github.com/$(GITHUB_ORG) --token $(GITHUB_TOKEN)
+        count=$((count+1))
+    done
+    echo "Finished configuring runners"
+    /etc/cron.d/restart-actions.sh
+}
+
 dsbd_lab_start() {
     check_and_mount_smb
     set_env_vars
@@ -169,11 +185,12 @@ dsbd_lab_start() {
     configure_pot
 
     install_act
-    create_base
-    create_base_bridge
-    configure_base_sshd
+    #create_base
+    #create_base_bridge
+    #configure_base_sshd
 
     enable_runners
+    start_pots
 }
 
 load_rc_config $name
