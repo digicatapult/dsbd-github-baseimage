@@ -158,20 +158,36 @@ UsePAM no"
 }
 
 start_pots() {
-    count=0
-    max=3
-    . "$HOME/.profile"
+    count=$(pot ls -p -q | wc -l)
+    max_runners=4
+
     cd "$HOME/act-pot-cheribsd"
-    echo "Configuring GitHub Actions runners"
-    while [ "$count" -lt "$max"]
-    do
-        echo "Configuring runner $((count+1))"
-        ./config.sh --url https://github.com/$(GITHUB_ORG) --token $(GITHUB_TOKEN)
-        count=$((count+1))
+
+    while [ "$count" -lt "$max_runners" ]; do
+        # Calculate the index for the next runner
+        next_runner=$((count + 1))
+
+        # Attempt to configure the runner
+        echo "Attempting to configure runner $next_runner"
+        ./config.sh --url "https://github.com/${GITHUB_ORG}" --token "${GITHUB_TOKEN}"
+
+        # Update the count after the configuration attempt
+        new_count=$(pot ls -p -q | wc -l)
+
+        # Check if the new runner was successfully added
+        if [ "$new_count" -gt "$count" ]; then
+            echo "Runner $next_runner configured successfully."
+            count=$new_count
+        else
+            echo "Failed to configure runner $next_runner."
+            # Break the loop if a runner configuration fails to prevent infinite looping
+            break
+        fi
     done
-    echo "Finished configuring runners"
+
     /etc/cron.d/restart-actions.sh
 }
+
 
 dsbd_lab_start() {
     check_and_mount_smb
