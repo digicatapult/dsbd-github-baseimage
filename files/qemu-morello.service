@@ -13,8 +13,6 @@ ExecStart=/output/sdk/bin/qemu-system-morello \
     -smp ${QEMU_SMP} -m ${QEMU_MEM} -nographic \
     -drive if=none,file=/output/cheribsd-morello-purecap.zfs.qcow2,id=drv0,format=qcow2 \
     -device virtio-blk-pci,drive=drv0 \
-    -drive if=none,file=/output/jailroot-disk.zfs.qcow2,id=drv1,format=qcow2 \
-    -device virtio-blk-pci,drive=drv1 \
     -device virtio-net-pci,netdev=net0 \
     -netdev 'user,id=net0,hostfwd=tcp::10005-:22,smb=/etc/qemu-morello/smbshare<<<smbshare@rw'
 ExecStop=/bin/kill $MAINPID

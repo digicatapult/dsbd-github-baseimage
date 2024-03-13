@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+#set -euo pipefail
 
 echo "Starting script execution..."
 
@@ -11,8 +11,7 @@ CHERIBUILD_DIR="$CHERI_HOME/cheri/cheribuild"
 QEMU_BIN_DIR="/output/sdk/bin"
 DISK_IMAGE_RAW="/output/cheribsd-morello-purecap.zfs.img"
 DISK_IMAGE_QCOW="/output/cheribsd-morello-purecap.zfs.qcow2"
-JAILROOT_DISK="/output/jailroot-disk.zfs.qcow2"
-JAILROOT_SIZE="50G"
+DISK_IMAGE_SIZE="50G"
 SERVICE_FILE="/etc/systemd/system/qemu-morello.service"
 SERVICE_SRC="/tmp/qemu-morello.service"
 UPDATER_FILE="/etc/systemd/system/update-qemu-morello-config.service"
@@ -32,27 +31,21 @@ run_cheribuild_qemu() {
 }
 
 # Function to create ZFS pool and configure it
-create_and_configure_zfs() {
-    echo "Creating and configuring ZFS pool..."
-    runuser -u cheri -- "$QEMU_BIN_DIR/qemu-img" create -f qcow2 -o preallocation=metadata "$JAILROOT_DISK" "$JAILROOT_SIZE"
+alter_zfs() {
+    echo "Altering ZFS pool..."
+    runuser -u cheri -- "$QEMU_BIN_DIR/qemu-img" resize -f qcow2 "$DISK_IMAGE_QCOW" "$DISK_IMAGE_SIZE"
     modprobe nbd || echo "Failed to load nbd module. Is it already loaded?"
 
-    if "$QEMU_BIN_DIR/qemu-nbd" --connect=/dev/nbd0 "$JAILROOT_DISK"; then
+    if "$QEMU_BIN_DIR/qemu-nbd" --connect=/dev/nbd0 "$DISK_IMAGE_QCOW"; then
         echo "Connected to NBD device."
-    else
-        echo "Failed to connect to NBD device."
-        exit 1
-    fi
-
-    if zpool create -f jailroot /dev/nbd0; then
-        zfs create jailroot/cheri
-        zfs set compression=on jailroot/cheri
-        zfs set dedup=on jailroot/cheri
-        zpool export jailroot
+        zpool set autoexpand=on zroot
+        zpool online -e zroot /dev/nbd0
+        zpool export zroot
+        zpool list
         echo "ZFS pool creation and configuration completed."
     else
-        echo "Failed to create ZFS pool."
-        exit 1
+        echo "Failed to connect to NBD device."
+        #exit 1
     fi
 
     "$QEMU_BIN_DIR/qemu-nbd" --disconnect /dev/nbd0
@@ -105,9 +98,9 @@ setup_systemd_service() {
 # Call the functions with parameters
 echo "Executing functions..."
 run_cheribuild_qemu
-create_and_configure_zfs
 run_cheribuild_disk_image
 convert_to_qcow2
+alter_zfs
 setup_systemd_service
 
 echo "Script execution completed successfully."

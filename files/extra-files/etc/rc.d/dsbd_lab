@@ -49,7 +49,7 @@ POT_LOG_FACILITY=local2" > /usr/local64/etc/pot/pot.conf
 
 install_act() {
     if [ ! -d "$HOME/act-pot-cheribsd" ]; then
-        git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd --no-progress
+        git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd --branch refactor/optimisation --no-progress
     fi
     cd $HOME/act-pot-cheribsd
     # Install runner scripts/flavours
@@ -57,12 +57,7 @@ install_act() {
 }
 
 setup_zfs() {
-    if ! zpool list | grep -q "jailroot"; then
-        zpool create -f jailroot vtbd1
-    fi
-
     zfs list | grep -q "/opt/pot" || zfs create -o mountpoint=/opt/pot -o compression=on zroot/pot
-    zfs list | grep -q "/opt/pot/jails" || zfs create -o mountpoint=/opt/pot/jails -o overlay=on -o compression=on jailroot/jails
     zfs mount -a
     zpool upgrade zroot
 }
