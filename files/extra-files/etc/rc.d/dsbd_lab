@@ -154,7 +154,7 @@ UsePAM no"
 
 start_pots() {
     count=$(pot ls -p -q | wc -l)
-    max_runners=4
+    max_runners=1
 
     cd "$HOME/act-pot-cheribsd"
 
