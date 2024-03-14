@@ -49,7 +49,7 @@ POT_LOG_FACILITY=local2" > /usr/local64/etc/pot/pot.conf
 
 install_act() {
     if [ ! -d "$HOME/act-pot-cheribsd" ]; then
-        git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd --branch refactor/optimisation --no-progress
+        git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd --no-progress
     fi
     cd $HOME/act-pot-cheribsd
     # Install runner scripts/flavours
