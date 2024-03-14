@@ -2,7 +2,7 @@
 
 # Configurable Variables with environment variable overrides or defaults
 CONFIG_FILE="${CONFIG_FILE:-/etc/sysconfig/qemu-morello.conf}"
-BUFFER_MEM_MB="${BUFFER_MEM_MB:-1024}"  # Memory buffer in MB reserved for the system, default 1024 MB
+BUFFER_MEM_MB="${BUFFER_MEM_MB:-2048}"  # Memory buffer in MB reserved for the system, default 2048 MB
 MIN_CPU_THREADS="${MIN_CPU_THREADS:-1}"   # Minimum number of CPU threads for QEMU, default 1
 CPU_DEDUCTION="${CPU_DEDUCTION:-2}"     # Number of CPUs to reserve for the host, default 2
 KEY_VAULT_NAME="${KEY_VAULT_NAME:-YourKeyVaultName}"  # Default Key Vault name for Azure
