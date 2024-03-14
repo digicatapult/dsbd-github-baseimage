@@ -60,6 +60,7 @@ setup_zfs() {
     zfs list | grep -q "/opt/pot" || zfs create -o mountpoint=/opt/pot -o compression=on zroot/pot
     zfs mount -a
     zpool upgrade zroot
+    service growfs onestart
 }
 
 check_and_mount_smb() {

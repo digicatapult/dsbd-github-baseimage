@@ -30,26 +30,11 @@ run_cheribuild_qemu() {
     echo "Cheribuild QEMU completed."
 }
 
-# Function to create ZFS pool and configure it
-alter_zfs() {
-    echo "Altering ZFS pool..."
+# Function to Expand the zfs disk
+resize_zfs() {
+    echo "Altering ZFS Disk"
     runuser -u cheri -- "$QEMU_BIN_DIR/qemu-img" resize -f qcow2 "$DISK_IMAGE_QCOW" "$DISK_IMAGE_SIZE"
-    modprobe nbd || echo "Failed to load nbd module. Is it already loaded?"
-
-    if "$QEMU_BIN_DIR/qemu-nbd" --connect=/dev/nbd0 "$DISK_IMAGE_QCOW"; then
-        echo "Connected to NBD device."
-        zpool set autoexpand=on zroot
-        zpool online -e zroot /dev/nbd0
-        zpool export zroot
-        zpool list
-        echo "ZFS pool creation and configuration completed."
-    else
-        echo "Failed to connect to NBD device."
-        #exit 1
-    fi
-
-    "$QEMU_BIN_DIR/qemu-nbd" --disconnect /dev/nbd0
-    echo "Disconnected NBD device."
+    echo "Expanded ZFS disk."
 }
 
 # Function to run cheribuild to build the disk image
@@ -100,7 +85,7 @@ echo "Executing functions..."
 run_cheribuild_qemu
 run_cheribuild_disk_image
 convert_to_qcow2
-alter_zfs
+resize_zfs
 setup_systemd_service
 
 echo "Script execution completed successfully."
