@@ -81,8 +81,8 @@ set_env_vars() {
 
     # Add secrets via Samba/SMB mount
     if [ -f "${mount_point}/github_pat.secret" ]; then
-        GITHUB_TOKEN=$(cat "${mount_point}/github_pat.secret")
-        echo "export GITHUB_TOKEN='${GITHUB_TOKEN}'" >> $env_file
+        GITHUB_PAT=$(cat "${mount_point}/github_pat.secret")
+        echo "export GITHUB_PAT='${GITHUB_PAT}'" >> $env_file
     fi
 
     if [ -f "${mount_point}/github_org.txt" ]; then
@@ -157,6 +157,7 @@ start_pots() {
     count=$(pot ls -p -q | wc -l)
     max_runners=3
 
+    . $HOME/.profile
     cd "$HOME/act-pot-cheribsd"
 
     while [ "$count" -lt "$max_runners" ]; do
@@ -165,6 +166,7 @@ start_pots() {
 
         # Attempt to configure the runner
         echo "Attempting to configure runner $next_runner"
+        ./get_token.sh
         ./config.sh --url "https://github.com/${GITHUB_ORG}" --token "${GITHUB_TOKEN}"
 
         # Update the count after the configuration attempt
