@@ -166,7 +166,7 @@ start_pots() {
 
         # Attempt to configure the runner
         echo "Attempting to configure runner $next_runner"
-        ./get_token.sh
+        . get_token.sh
         ./config.sh --url "https://github.com/${GITHUB_ORG}" --token "${GITHUB_TOKEN}"
 
         # Update the count after the configuration attempt
