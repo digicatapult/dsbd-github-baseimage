@@ -1,0 +1,76 @@
+#!/bin/sh
+
+# PROVIDE: dsbd_releng
+# REQUIRE: NETWORKING LOGIN FILESYSTEM dsbd_lab
+# BEFORE: securelevel
+
+. /etc/rc.subr
+
+name="dsbd_releng"
+rcvar="dsbd_releng_enable"
+start_cmd="dsbd_releng_start"
+
+set_context() {
+    if [ -z "${RELEASE_PIPELINE}" ]; then
+        echo No release pipeline configuration has been set.
+        exit 1
+    elif [ "${RELEASE_PIPELINE}" -eq 0 ]; then
+        echo The release pipeline has been disabled.
+        exit 1
+    fi
+
+    if [ -z "${RELEASE_NAME}" ] || [ -z "${RELEASE_VERSION}" ]; then
+        echo Either RELEASE_NAME or RELEASE_VERSION are missing.
+        echo Initialise a release pipeline explicitly with both.
+        exit 1
+    fi
+}
+
+eval_system() {
+    # Check that dsbd_lab finished
+    if [ -z "$(which pot)" ]; then
+        echo Pot needs to be installed and configured before use.
+        exit 1
+    fi
+
+    # Check that the target exists
+    if [ -z "$(pot ls -p -q | grep -i ${RELEASE_NAME})" ]; then
+        echo No pot named "${RELEASE_NAME}" was found.
+        exit 1
+    fi
+
+    # Check that a Samba share is writable
+    if [ "$(grep -c 'smbfs rw' /etc/fstab)" -eq 0 ]; then
+        echo No writable SMB mount was found.
+        exit 1
+    fi
+}
+
+export_upstream() {
+    mount=/mnt/pots
+    mkdir -p "$mount"
+
+    tarball="${RELEASE_NAME}_${RELEASE_VERSION}.xz"
+
+    # Check whether the destination is being clobbered
+    if [ ! -f "${mount}/${tarball}" ]; then
+        # Export with zero compression
+        echo Exporting "$tarball" to "$mount"
+        pot export -v -p "${RELEASE_NAME}" -t "${RELEASE_VERSION}" \
+            -l 0 -A -D "${mount}"
+    else
+        echo The release "$tarball" already exists upstream.
+        echo The pipeline has nothing to do.
+        exit 1
+    fi
+}
+
+dsbd_releng_start() {
+    set_context
+    eval_system
+    export_upstream
+}
+
+load_rc_config $name
+: ${dsbd_releng_enable:=yes}
+run_rc_command "$@"

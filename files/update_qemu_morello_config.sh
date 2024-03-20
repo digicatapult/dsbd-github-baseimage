@@ -9,6 +9,9 @@ KEY_VAULT_NAME="${KEY_VAULT_NAME:-YourKeyVaultName}"  # Default Key Vault name f
 SECRET_NAME="${SECRET_NAME:-GitHubPAT}"               # Default secret name for both Azure and AWS
 GITHUB_ORG="${GITHUB_ORG:-YourGithubOrg}"             # Default GitHub Organization
 SECRET_SOURCE="${SECRET_SOURCE:-azure}"  # Source of the secret: 'azure' or 'aws'
+RELEASE_PIPELINE="${RELEASE_PIPELINE:-0}"  # Enable a release pipeline for jail images (pots), default 0
+RELEASE_NAME="${RELEASE_NAME:-sibling}"  # Set the name of upstream pots
+RELEASE_VERSION="${RELEASE_VERSION:-1.0.0}"  # Set their release version
 
 # Logging function
 log() {
