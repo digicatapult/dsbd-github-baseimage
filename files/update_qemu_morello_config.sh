@@ -127,6 +127,6 @@ fetch_github_pat
 echo "$GITHUB_ORG" > /etc/qemu-morello/smbshare/github_org.txt  # Output the GitHub Org to a file
 chmod 600 /etc/qemu-morello/smbshare/github_pat.secret
 chmod 600 /etc/qemu-morello/smbshare/github_org.txt
+setup_pipeline
 chown -R cheri:cheri /etc/qemu-morello/smbshare
 log "GitHub PAT and Org stored securely in smbshare directory."
-setup_pipeline
