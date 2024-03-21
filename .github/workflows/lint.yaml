@@ -18,7 +18,7 @@ jobs:
       run: |
         files=$(find . -type f ! -path '*/\.*' -exec grep -lE '^#!(/usr)?/bin/(ba)?sh' {} +)
         if [ -n "$files" ]; then
-          shellcheck -a -S warning -s sh $files
+          shellcheck -a -S warning $files
         else
           echo "No shell scripts with #!/bin/sh or #!/bin/bash shebang found."
         fi
