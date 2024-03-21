@@ -107,6 +107,17 @@ fetch_github_pat() {
     log "GitHub PAT written to /etc/qemu-morello/smbshare/github_pat.secret"
 }
 
+setup_pipeline() {
+    pipeline=/etc/qemu-morello/smbshare/pipeline.txt
+    echo RELEASE_PIPELINE="${RELEASE_PIPELINE}" > "$pipeline"
+    echo RELEASE_NAME="${RELEASE_NAME}" >> "$pipeline"
+    echo RELEASE_VERSION="${RELEASE_VERSION}" >> "$pipeline"
+    chmod 600 "$pipeline"
+    if [ "${RELEASE_PIPELINE}" -ne 0 ]; then
+        log "A pipeline has been configured to release pots"
+    fi
+}
+
 # Main execution
 log "Updating QEMU Morello service configuration..."
 write_config
@@ -118,3 +129,4 @@ chmod 600 /etc/qemu-morello/smbshare/github_pat.secret
 chmod 600 /etc/qemu-morello/smbshare/github_org.txt
 chown -R cheri:cheri /etc/qemu-morello/smbshare
 log "GitHub PAT and Org stored securely in smbshare directory."
+setup_pipeline

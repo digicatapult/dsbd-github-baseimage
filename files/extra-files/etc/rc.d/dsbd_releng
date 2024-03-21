@@ -11,6 +11,14 @@ rcvar="dsbd_releng_enable"
 start_cmd="dsbd_releng_start"
 
 set_context() {
+    mount=/mnt/pots
+    mkdir -p "$mount"
+    if [ -f "${mount}/../pipeline.txt" ]; then
+        set -a
+        . "${mount}/../pipeline.txt"
+        set +a
+    fi
+
     if [ -z "${RELEASE_PIPELINE}" ]; then
         echo No release pipeline configuration has been set.
         exit 1
@@ -47,9 +55,6 @@ eval_system() {
 }
 
 export_upstream() {
-    mount=/mnt/pots
-    mkdir -p "$mount"
-
     tarball="${RELEASE_NAME}_${RELEASE_VERSION}.xz"
 
     # Check whether the destination is being clobbered
@@ -61,7 +66,6 @@ export_upstream() {
     else
         echo The release "$tarball" already exists upstream.
         echo The pipeline has nothing to do.
-        exit 1
     fi
 }
 
