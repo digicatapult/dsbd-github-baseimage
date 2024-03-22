@@ -21,6 +21,7 @@ install_deps() {
     git clang bison cmake mercurial ninja-build samba flex texinfo \
     time libglib2.0-dev libpixman-1-dev libarchive-dev libarchive-tools \
     libbz2-dev libattr1-dev libcap-ng-dev libexpat1-dev libgmp-dev unzip \
+    inotify-tools \
     zfsutils-linux  # Add this line to install ZFS utilities
     echo "Dependencies installation complete."
 }

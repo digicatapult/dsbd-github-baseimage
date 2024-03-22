@@ -67,7 +67,9 @@ export_upstream() {
         # Export with zero compression
         echo Exporting "$tarball" to "$mount"
         pot export -v -p "${RELEASE_NAME}" -t "${RELEASE_VERSION}" \
-            -l 0 -A -D "${mount}"
+            -l 0 -A -D "${mount}" && \
+        rm -f /mnt/pipeline.txt
+        # Consume the configuration to trigger inotifywait on the host
     else
         echo The release "$tarball" already exists upstream.
         echo The pipeline has nothing to do.
