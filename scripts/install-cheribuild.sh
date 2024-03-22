@@ -60,7 +60,7 @@ determine_zfs_paths() {
 
 configure_sudoers_for_zfs() {
     local paths
-    paths=($(determine_zfs_paths))
+    mapfile -t paths < <(determine_zfs_paths)
 
     local sudo_cmds=""
     for path in "${paths[@]}"; do
