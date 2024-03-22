@@ -12,6 +12,8 @@ SECRET_SOURCE="${SECRET_SOURCE:-azure}"  # Source of the secret: 'azure' or 'aws
 RELEASE_PIPELINE="${RELEASE_PIPELINE:-0}"  # Enable a release pipeline for jail images (pots), default 0
 RELEASE_NAME="${RELEASE_NAME:-sibling}"  # Set the name of upstream pots
 RELEASE_VERSION="${RELEASE_VERSION:-1.0.0}"  # Set their release version
+STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-YourStorageAccount}"  # Default Azure Storage Account
+FILE_SHARE="${FILE_SHARE:-YourFileShare}"  # Default Azure File Share
 
 # Logging function
 log() {
@@ -125,7 +127,7 @@ export_azure_artefacts() {
         shasum -a 256 "$pots"/*.xz > "$pots"/SHA256
 
         if [ "$SECRET_SOURCE" == "azure" ]; then
-            az storage copy -s "$pots"/* -d https://dsbdpots.file.core.windows.net/artefacts/"$RELEASE_NAME/$RELEASE_VERSION" --recursive && \
+            az storage copy -s "$pots"/* -d "https://${STORAGE_ACCOUNT}.file.core.windows.net/$FILE_SHARE/$RELEASE_NAME/$RELEASE_VERSION" --recursive && \
             echo "Release artefacts for $RELEASE_NAME, version $RELEASE_VERSION, have been uploaded."
         fi
     done
