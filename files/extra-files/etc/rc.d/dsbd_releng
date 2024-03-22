@@ -11,6 +11,8 @@ rcvar="dsbd_releng_enable"
 start_cmd="dsbd_releng_start"
 
 set_context() {
+    export PATH=$PATH:/usr/local64/bin
+
     mount=/mnt/pots
     mkdir -p "$mount"
     if [ -f "${mount}/../pipeline.txt" ]; then
@@ -32,6 +34,8 @@ set_context() {
         echo Initialise a release pipeline explicitly with both.
         exit 1
     fi
+
+    echo Initialising a release pipeline for "${RELEASE_NAME}".
 }
 
 eval_system() {
@@ -56,6 +60,7 @@ eval_system() {
 
 export_upstream() {
     tarball="${RELEASE_NAME}_${RELEASE_VERSION}.xz"
+    echo Expecting to generate "$tarball".
 
     # Check whether the destination is being clobbered
     if [ ! -f "${mount}/${tarball}" ]; then
