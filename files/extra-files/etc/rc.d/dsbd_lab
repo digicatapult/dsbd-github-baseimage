@@ -190,12 +190,13 @@ start_pots() {
 
 start_cronjobs() {
     (
-    echo "* 9 */1 * * /usr/bin/lockf -t 2 /sbin/zpool status -v >> /var/log/zpool.log"
-    echo "* 12 */1 * * /usr/bin/lockf -t 2 /etc/cron.d/scrub-pool.sh >> /var/log/scrub-pool.log"
-    echo "* */1 * * * /usr/bin/lockf -t 2 /etc/cron.d/clean-pots.sh >> /var/log/clean-pots.log"
-    echo "*/10 * * * * /usr/bin/lockf -t 2 /etc/cron.d/count-pots.sh >> /var/log/count-pots.log"
-    echo "*/2 * * * * /usr/bin/lockf -t 2 /etc/cron.d/restart-actions.sh >> /var/log/restart-actions.log"
+    echo "* 9 */1 * * lockf -t 2 /sbin/zpool status -v >> /var/log/zpool.log"
+    echo "* 12 */1 * * lockf -t 2 /etc/cron.d/scrub-pool.sh >> /var/log/scrub-pool.log"
+    echo "* */1 * * * lockf -t 2 /etc/cron.d/clean-pots.sh >> /var/log/clean-pots.log"
+    echo "*/10 * * * * lockf -t 2 /etc/cron.d/count-pots.sh >> /var/log/count-pots.log"
+    echo "*/2 * * * * lockf -t 2 /etc/cron.d/restart-actions.sh >> /var/log/restart-actions.log"
     ) | crontab -
+    service cron onestart
 }
 
 
