@@ -103,7 +103,6 @@ install_qemu() {
 install_cheribuild() {
     echo "Installing Cheribuild..."
     runuser -l "$CHERI_USER" -c "git clone \"$CHERIBUILD_REPO\" \"$CHERI_HOME/cheri/cheribuild\""
-    runuser -l "$CHERI_USER" -c "pushd \"$CHERI_HOME/cheri/cheribuild\" && git apply /tmp/cheribuild-gmp-git.patch && popd"
     echo "Cheribuild installation complete."
 }
 

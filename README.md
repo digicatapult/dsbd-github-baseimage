@@ -1,33 +1,77 @@
 # README.md
 
+## Project Description
+This is a packer project to build a CheriBSD Morello [QEMU](https://github.com/CTSRD-CHERI/qemu) environment with builtin support for [Github Actions](https://github.com/actions/runner) self-hosted runners.
+
 ## Pre-requisites
-packer
 
-clone the repository
+* packer
 
-## Build the image
+* Azure or AWS account
+
+### Development
+
+* shellCheck
+
+## Installation
+
+Begin by cloning the repository
+
+```sh
+git clone https://github.com/digicatapult/dsbd-github-baseimage.git
+```
+
+## Configuration
+Depending on if you are using the Azure Builder or the AWS Builder you will need to set the following in a file called `secrets.auto.pkrvars.hcl` in the root of the repo.  The file should contain the following variables:
+
+### Azure
+
+```sh
+subscription_id = "<The Subscription ID for your Azure account>"
+image_resource_group_name = "<Resource Group name for the storage account"
+image_version = "<Semver compatible version number>"
+```
+
+### AWS
+
+```sh
+aws_access_key = "<Your AWS Access Key ID>"
+aws_secret_key = "<Your AWS Secret Access Key>"
+```
+
+### Either
+```sh
+ssh_public_key = "<String representation of the public key that you use to access the CheriBSD QEMU guest>"
+```
+
+## Usage
+
+### Azure
 
 Login to Azure
-
+```
 az login --subscription <subscription_id>
+```
 
 Prestage the SIG image definition (If it has not already been created)
 
 ```
-az sig image-definition create --resource-group dsbd-github-images --gallery-name arm64 \
- --gallery-image-definition dsbd-ubuntu-22.04-lts --publisher Canonical --offer 0001-com-ubuntu-server-jammy \
- --sku 22_04-lts-arm64 --os-type linux --hyper-v-generation V2 --architecture Arm64
+az sig image-definition create --resource-group <your RG name> --gallery-name <your gallery name> \
+ --gallery-image-definition <your image name> --publisher Canonical --offer 0001-com-ubuntu-server-jammy \
+ --sku <SKU> --os-type linux --hyper-v-generation V2 --architecture <Architecture>
 ```
 
-You will need to provide some vars, namely, the resource group and the subscription id which have been purposefully omitted from the repo as they are considered secret, these can be loaded automatically from a file called `secrets.auto.pkrvars.hcl` in the root of the repo.  You will also need to supply the AWS credentials in the same file, e.g. aws_access_key and aws_secret_key.
+Run packer build
+```
+packer build -only=azure-arm.ubuntu --var aws_access_key=blah --var aws_secret_key=blah .
+```
+### AWS
 
-Run using `packer build .` in the root of the repo.
 
-To only run one of the sources e.g. the aws source, use `packer build -only=amazon-ebs.ubuntu .`
 
 ### Retrieving Github Actions PAT from Azure Key Vault or AWS Secrets Manager
 
-The PAT is stored in Azure Key Vault or AWS Secrets Manager.  The PAT is used to authenticate to Github and retrieve a token for registering a self served Github Actions runner.  Using cloudInit please provide the following ENVARS for the `update_qemu_morello_config.sh` script to retrieve the PAT from the respective secret store.  We suggest using cloudinit to write the environment variables to `/etc/environment` so that they are available to the `update_qemu_morello_config.sh` script.
+The PAT is stored in Azure Key Vault or AWS Secrets Manager.  The PAT is used to authenticate to Github and retrieve a token for registering a self served Github Actions runner.  Using cloudInit please provide the following ENVARS for the `update_qemu_morello_config.sh` script to retrieve the PAT from the respective secret store.  We suggest using cloudinit to write the environment variables to `/etc/sysconfig/update-qemu-morello-config.conf` so that they are available to the `update_qemu_morello_config.sh` script.
 
 ```yaml
 #cloud-config
@@ -43,18 +87,15 @@ write_files:
 
 ### Accessing the QEMU guest
 
-We recommend you access the QEMU guest by using ssh.  Firstly you will need to establish a tunnel to the Ubuntu host via a bastion, in Azure this can be achieved with the following command:
+We recommend you access the QEMU guest by using ssh, you will need to have the corresponding private key to the public key that you used when building the image.
+
+You will need to use `ssh-agent` forwarding to pass the key to the QEMU guest.  To do this you will need to add the key to your ssh-agent using the following command:
 
 ```sh
-az network bastion tunnel --resource-group <resource-group> --name <bastion-name> --target-resource-id <resource ID of the VM or the VMSS instance ID you wish to access> --resource-port 22 --port 2022
-```
-Secondly you will need to ssh to the ubuntu host using ssh-agent forwarding, this can be achieved with the following command:
-
-```sh
-ssh -A -p 2022 <username>@localhost
+ssh -A <username>@<host>
 ```
 
-Once you have access to the ubuntu host you can ssh to the QEMU guest using the following command:
+ Once you have access to the ubuntu host you can ssh to the QEMU guest using the following command:
 
 ```sh
 ssh -p 10005 root@localhost

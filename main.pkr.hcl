@@ -101,11 +101,6 @@ build {
     source      = "./files/cheribuild.json"
     destination = "/tmp/cheribuild.json"
   }
-  # This is to deal with Azure being blacklisted by the gmp mercurial server, so we use a github mirror instead.
-  provisioner "file" {
-    source      = "./files/cheribuild-gmp-git.patch"
-    destination = "/tmp/cheribuild-gmp-git.patch"
-  }
   provisioner "file" {
     source      = "./files/qemu-morello.service"
     destination = "/tmp/qemu-morello.service"
