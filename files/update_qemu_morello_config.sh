@@ -9,11 +9,6 @@ KEY_VAULT_NAME="${KEY_VAULT_NAME:-YourKeyVaultName}"  # Default Key Vault name f
 SECRET_NAME="${SECRET_NAME:-GitHubPAT}"               # Default secret name for both Azure and AWS
 GITHUB_ORG="${GITHUB_ORG:-YourGithubOrg}"             # Default GitHub Organization
 SECRET_SOURCE="${SECRET_SOURCE:-azure}"  # Source of the secret: 'azure' or 'aws'
-RELEASE_PIPELINE="${RELEASE_PIPELINE:-0}"  # Enable a release pipeline for jail images (pots), default 0
-RELEASE_NAME="${RELEASE_NAME:-sibling}"  # Set the name of upstream pots
-RELEASE_VERSION="${RELEASE_VERSION:-1.0.0}"  # Set their release version
-STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-YourStorageAccount}"  # Default Azure Storage Account
-FILE_SHARE="${FILE_SHARE:-YourFileShare}"  # Default Azure File Share
 
 # Logging function
 log() {
@@ -109,42 +104,6 @@ fetch_github_pat() {
     log "GitHub PAT written to /etc/qemu-morello/smbshare/github_pat.secret"
 }
 
-export_azure_artefacts() {
-    pots="${CONFIG_FILE}"/pots
-    if [ ! -d "$pots" ]; then
-        handle_error "No directory could be found on the guest containing pots."
-        return 1
-    fi
-
-    if ! command -v inotifywait &> /dev/null; then
-        handle_error "Failed to locate inotifywait for monitoring guest behaviour."
-        return 1
-    fi
-
-    # Use inotifywait to monitor for changes on the guest
-    while :; do
-        inotifywait -qe delete "$pipeline" &>/dev/null || \
-        shasum -a 256 "$pots"/*.xz > "$pots"/SHA256
-
-        if [ "$SECRET_SOURCE" == "azure" ]; then
-            az storage copy -s "$pots"/* -d "https://${STORAGE_ACCOUNT}.file.core.windows.net/$FILE_SHARE/$RELEASE_NAME/$RELEASE_VERSION" --recursive && \
-            echo "Release artefacts for $RELEASE_NAME, version $RELEASE_VERSION, have been uploaded."
-        fi
-    done
-}
-
-setup_pipeline() {
-    pipeline=/etc/qemu-morello/smbshare/pipeline.txt
-    echo RELEASE_PIPELINE="${RELEASE_PIPELINE}" > "$pipeline"
-    echo RELEASE_NAME="${RELEASE_NAME}" >> "$pipeline"
-    echo RELEASE_VERSION="${RELEASE_VERSION}" >> "$pipeline"
-    chmod 600 "$pipeline"
-    if [ "${RELEASE_PIPELINE}" -ne 0 ]; then
-        log "A pipeline has been configured to release pots"
-        export_azure_artefacts
-    fi
-}
-
 # Main execution
 log "Updating QEMU Morello service configuration..."
 write_config
@@ -154,6 +113,9 @@ fetch_github_pat
 echo "$GITHUB_ORG" > /etc/qemu-morello/smbshare/github_org.txt  # Output the GitHub Org to a file
 chmod 600 /etc/qemu-morello/smbshare/github_pat.secret
 chmod 600 /etc/qemu-morello/smbshare/github_org.txt
-setup_pipeline
 chown -R cheri:cheri /etc/qemu-morello/smbshare
 log "GitHub PAT and Org stored securely in smbshare directory."
+
+# Export useful non-secret variables for other services
+export CONFIG_FILE
+export SECRET_SOURCE
