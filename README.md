@@ -22,7 +22,7 @@ git clone https://github.com/digicatapult/dsbd-github-baseimage.git
 ```
 
 ## Configuration
-Depending on if you are using the Azure Builder or the AWS Builder you will need to set the following in a file called `secrets.auto.pkrvars.hcl` in the root of the repo.  The file should contain the following variables:
+Depending on if you are using the Azure Builder or the AWS Builder you will need to set the following in a file called `secrets.auto.pkrvars.hcl` in the root of the repository.  The file should contain the following variables:
 
 ### Azure
 
