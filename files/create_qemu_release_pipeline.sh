@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Release engineering pipeline variables with overrides or defaults
 RELEASE_PIPELINE="${RELEASE_PIPELINE:-0}"  # Enable a release pipeline for jail images (pots), default 0
