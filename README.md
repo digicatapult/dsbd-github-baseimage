@@ -100,3 +100,33 @@ ssh -A <username>@<host>
 ```sh
 ssh -p 10005 root@localhost
 ```
+
+### Container release engineering
+[Pot][pot] is a BSD jail manager and container framework used to create the isolated environments in which the GitHub runners are executed. There is an upstream pot ("sibling") created and bootstrapped with the libraries for CheriBSD's various ABIs, respectively "hybrid", "purecap" (CheriABI), and "benchmark", to allow the use of pkg64, pkg64c, and pk64cb. That bootstrapped pot is an ideal template for exporting, modifying, and re-releasing jails as containers, depending on what the user or organisation wishes to include in the upstream of their own CI pipelines.
+
+[Potluck][potluck] is an example for how FreeBSD pots can be consumed; the [Docker Hub][hub] is a similar concept and may provide further inspiration.
+
+This CheriBSD implementation exports a given upstream pot to an Azure file share. Three pipeline variables configure the CheriBSD guest for release engineering, namely `RELEASE_PIPELINE`, `RELEASE_NAME`, and `RELEASE_VERSION`, while the other two variables determine the remote destination.
+- `RELEASE_PIPELINE` enables the release pipeline for pots, default "0"
+- `RELEASE_NAME` is the name of upstream pots, default "sibling"
+- `RELEASE_VERSION` is a tag, typically the semantic version of the release, default "1.0.0"
+- `STORAGE_ACCOUNT` is the name of the intended Azure Storage Account
+- `FILE_SHARE` is the Azure File Share to use
+
+```yaml
+#cloud-config
+write_files:
+- path: /etc/sysconfig/create-qemu-release-pipeline.conf
+  content: |
+    RELEASE_PIPELINE=1
+    RELEASE_NAME=sibling
+    RELEASE_VERSION=1.0.0
+    STORAGE_ACCOUNT=YourAzureStorageAccount
+    FILE_SHARE=YourAzureFileShare
+  append: true
+```
+
+<!-- Links -->
+[pot]: https://github.com/bsdpot/pot
+[potluck]: https://potluck.honeyguide.net/
+[hub]: https://hub.docker.com/

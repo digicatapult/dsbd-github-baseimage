@@ -1,0 +1,12 @@
+[Unit]
+Description=Create a release pipeline for BSD containers
+After=update-qemu-morello-config.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sysconfig/create-qemu-release-pipeline.conf
+ExecStart=/usr/local/bin/create_qemu_release_pipeline.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=cloud-init.target
