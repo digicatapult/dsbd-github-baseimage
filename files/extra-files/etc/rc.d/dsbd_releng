@@ -4,6 +4,8 @@
 # REQUIRE: NETWORKING LOGIN FILESYSTEM dsbd_lab
 # BEFORE: securelevel
 
+# shellcheck disable=SC2034
+
 . /etc/rc.subr
 
 name="dsbd_releng"
