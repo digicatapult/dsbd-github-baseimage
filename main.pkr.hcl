@@ -118,6 +118,14 @@ build {
     destination = "/tmp/update_qemu_morello_config.sh"
   }
   provisioner "file" {
+    source      = "./files/create-qemu-release-pipeline.service"
+    destination = "/tmp/create-qemu-release-pipeline.service"
+  }
+  provisioner "file" {
+    source      = "./files/create_qemu_release_pipeline.sh"
+    destination = "/tmp/create_qemu_release_pipeline.sh"
+  }
+  provisioner "file" {
     source      = "./files/extra-files"
     destination = "/tmp/extra-files/"
   }

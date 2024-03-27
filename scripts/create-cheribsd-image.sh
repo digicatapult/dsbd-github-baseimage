@@ -12,6 +12,10 @@ QEMU_BIN_DIR="/output/sdk/bin"
 DISK_IMAGE_RAW="/output/cheribsd-morello-purecap.zfs.img"
 DISK_IMAGE_QCOW="/output/cheribsd-morello-purecap.zfs.qcow2"
 DISK_IMAGE_SIZE="50G"
+RELEASE_FILE="/etc/systemd/system/create-qemu-release-pipeline.service"
+RELEASE_SRC="/tmp/create-qemu-release-pipeline.service"
+RELEASE_SCRIPT="/usr/local/bin/create_qemu_release_pipeline.sh"
+RELEASE_SCRIPT_SRC="/tmp/create_qemu_release_pipeline.sh"
 SERVICE_FILE="/etc/systemd/system/qemu-morello.service"
 SERVICE_SRC="/tmp/qemu-morello.service"
 UPDATER_FILE="/etc/systemd/system/update-qemu-morello-config.service"
@@ -76,6 +80,18 @@ setup_systemd_service() {
         echo "Systemd qemu-morello service setup complete."
     else
         echo "Service unit file ($SERVICE_SRC) not found."
+        exit 1
+    fi
+    if [ -f "$RELEASE_SRC" ]; then
+        cp "$RELEASE_SRC" "$RELEASE_FILE"
+        cp "$RELEASE_SCRIPT_SRC" "$RELEASE_SCRIPT"
+        chmod +x "$RELEASE_SCRIPT"
+        touch /etc/sysconfig/create-qemu-release-pipeline.conf
+        systemctl daemon-reload
+        systemctl enable create-qemu-release-pipeline.service
+        echo "Systemd qemu-release-pipeline service setup complete."
+    else
+        echo "Release pipeline unit file ($RELEASE_SRC) or service script ($RELEASE_SCRIPT_SRC) not found."
         exit 1
     fi
 }

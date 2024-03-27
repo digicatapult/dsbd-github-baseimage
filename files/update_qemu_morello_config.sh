@@ -120,3 +120,7 @@ chmod 600 /etc/qemu-morello/smbshare/github_pat.secret
 chmod 600 /etc/qemu-morello/smbshare/github_org.txt
 chown -R cheri:cheri /etc/qemu-morello/smbshare
 log "GitHub PAT and Org stored securely in smbshare directory."
+
+# Export useful non-secret variables for other services
+export CONFIG_FILE
+export SECRET_SOURCE
