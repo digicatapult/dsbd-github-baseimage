@@ -61,7 +61,7 @@ determine_zfs_paths() {
 
 configure_sudoers_for_zfs() {
     local paths
-    paths=($(determine_zfs_paths))
+    mapfile -t paths < <(determine_zfs_paths)
 
     local sudo_cmds=""
     for path in "${paths[@]}"; do
@@ -104,7 +104,6 @@ install_qemu() {
 install_cheribuild() {
     echo "Installing Cheribuild..."
     runuser -l "$CHERI_USER" -c "git clone \"$CHERIBUILD_REPO\" \"$CHERI_HOME/cheri/cheribuild\""
-    runuser -l "$CHERI_USER" -c "pushd \"$CHERI_HOME/cheri/cheribuild\" && git apply /tmp/cheribuild-gmp-git.patch && popd"
     echo "Cheribuild installation complete."
 }
 

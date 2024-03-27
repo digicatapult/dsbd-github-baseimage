@@ -4,6 +4,8 @@
 # REQUIRE: NETWORKING LOGIN FILESYSTEM
 # BEFORE: securelevel
 
+# shellcheck disable=SC2034
+
 . /etc/rc.subr
 
 name="dsbd_lab"
@@ -28,7 +30,7 @@ configure_pot() {
     if [ ! -d "$HOME/pot" ]; then
         git -C $HOME clone https://github.com/digicatapult/pot --no-progress
     fi
-    cd $HOME/pot
+    cd $HOME/pot || exit
 
     # Copy to /usr/local64 for the hybrid ABI port
     for dir in bin etc share; do
@@ -51,7 +53,7 @@ install_act() {
     if [ ! -d "$HOME/act-pot-cheribsd" ]; then
         git -C $HOME clone https://github.com/digicatapult/act-pot-cheribsd --no-progress
     fi
-    cd $HOME/act-pot-cheribsd
+    cd $HOME/act-pot-cheribsd || exit
     # Install runner scripts/flavours
     ./install.sh
 }
@@ -105,25 +107,25 @@ fetch_manifests() {
 }
 
 get_latest_version() {
-    if [ ! -z $(echo releases) ]; then
-        version=$(echo $releases | awk -F " " '{print $NF}')
+    if [ ! -z "$(echo "$releases")" ]; then
+        version=$(echo "$releases" | awk -F " " '{print $NF}')
     else
         version="23.11"
     fi
-    echo $version
+    echo "$version"
 }
 
 create_base() {
     base_name=$(get_latest_version)
 
     # Create a base pot for the latest aarch64c release
-    if [ ! $(pot list -b | grep -Eo '$base_name') ]; then
-        pot create-base -r $base_name
+    if [ ! "$(pot list -b | grep -Eo '$base_name')" ]; then
+        pot create-base -r "$base_name"
     fi
 
     # Copy libraries for the hybrid and benchmark ABIs
     for lib in lib64 lib64cb; do
-        cp -nR /usr/$lib /opt/pot/bases/$base_name/usr/
+        cp -nR /usr/$lib /opt/pot/bases/"$base_name"/usr/
     done
 }
 
@@ -131,8 +133,8 @@ create_base_bridge() {
     bridge_name="bridge-"$(get_latest_version)
 
     # Create a private VNET for the release
-    pot create-private-bridge -B $bridge_name -S 256
-    pot vnet-start -B $bridge_name
+    pot create-private-bridge -B "$bridge_name" -S 256
+    pot vnet-start -B "$bridge_name"
 }
 
 configure_base_sshd() {
@@ -158,7 +160,7 @@ start_pots() {
     max_runners=3
 
     . $HOME/.profile
-    cd "$HOME/act-pot-cheribsd"
+    cd "$HOME/act-pot-cheribsd" || exit
 
     while [ "$count" -lt "$max_runners" ]; do
         # Calculate the index for the next runner

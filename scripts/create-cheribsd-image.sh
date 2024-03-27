@@ -28,9 +28,9 @@ echo "Configuration variables set."
 # Function to run cheribuild to build QEMU
 run_cheribuild_qemu() {
     echo "Running cheribuild to build QEMU..."
-    pushd "$CHERI_HOME" > /dev/null
+    pushd "$CHERI_HOME" > /dev/null || exit
     runuser -u cheri -- "$CHERIBUILD_DIR/cheribuild.py" --build qemu -d
-    popd > /dev/null
+    popd > /dev/null || exit
     echo "Cheribuild QEMU completed."
 }
 
@@ -44,9 +44,9 @@ resize_zfs() {
 # Function to run cheribuild to build the disk image
 run_cheribuild_disk_image() {
     echo "Running cheribuild to build CheriBSD disk image..."
-    pushd "$CHERI_HOME" > /dev/null
+    pushd "$CHERI_HOME" > /dev/null || exit
     runuser -u cheri -- "$CHERIBUILD_DIR/cheribuild.py" --build disk-image-morello-purecap -d --disk-image/rootfs-type zfs --disk-image/path "$DISK_IMAGE_RAW"
-    popd > /dev/null
+    popd > /dev/null || exit
     echo "Cheribuild CheriBSD disk image completed."
 }
 # Function to convert disk image to QCOW2
