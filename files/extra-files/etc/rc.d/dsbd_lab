@@ -188,6 +188,16 @@ start_pots() {
     /etc/cron.d/restart-actions.sh
 }
 
+start_cronjobs() {
+    echo "* 9 */1 * * /sbin/zpool status -v >> /var/log/zpool.log
+* 12 */1 * * /usr/bin/lockf -t 0 /var/run/scrub-pool.lock /etc/cron.d/scrub-pool.sh  >> /var/log/scrub-pool.log
+* */1 * * * /usr/bin/lockf -t 0 /var/run/clean-pots.lock /etc/cron.d/clean-pots.sh >> /var/log/clean-pots.log
+*/10 * * * * /usr/bin/lockf -t 0 /var/run/count-pots.lock /etc/cron.d/count-pots.sh >> /var/log/count-pots.log
+*/2 * * * * /usr/bin/lockf -t 0 /var/run/restart-actions.lock /etc/cron.d/restart-actions.sh >> /var/log/restart-actions.log" | \
+    crontab -
+    service cron onestart
+}
+
 
 dsbd_lab_start() {
     check_and_mount_smb
@@ -207,6 +217,7 @@ dsbd_lab_start() {
 
     enable_runners
     start_pots
+    start_cronjobs
 }
 
 load_rc_config $name
