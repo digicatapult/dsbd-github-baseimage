@@ -63,7 +63,7 @@ az sig image-definition create --resource-group <your RG name> --gallery-name <y
 
 Run packer build
 ```
-packer build -only=azure-arm.ubuntu --var aws_access_key=blah --var aws_secret_key=blah .
+packer build -only=azure-arm.ubuntu -var aws_access_key='' -var aws_secret_key='' -var-file=secrets.auto.pkrvars.hcl .
 ```
 ### AWS
 

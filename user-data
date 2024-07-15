@@ -1,0 +1,5 @@
+#cloud-config
+user: ${var.ssh_username}
+password: ${var.ssh_password}
+chpasswd: { expire: False }
+ssh_pwauth: True
