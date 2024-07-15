@@ -11,26 +11,6 @@ packer {
   }
 }
 
-# Cloud-init configuration files
-source "file" "user_data" {
-  content = <<-EOF
-    #cloud-config
-    user: ${var.ssh_username}
-    password: ${var.ssh_password}
-    chpasswd: { expire: False }
-    ssh_pwauth: True
-  EOF
-  target  = "user-data"
-}
-
-source "file" "meta_data" {
-  content = <<-EOF
-    instance-id: ubuntu-cloud
-    local-hostname: ubuntu-cloud
-  EOF
-  target  = "meta-data"
-}
-
 # Azure ARM Builder configuration
 source "azure-arm" "ubuntu" {
   use_azure_cli_auth = true
