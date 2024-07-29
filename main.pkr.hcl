@@ -72,11 +72,6 @@ build {
     inline = ["mkisofs -output cidata.iso -input-charset utf-8 -volid cidata -joliet -r user-data meta-data"]
   }
 
-  # Patch qemu to allow multicore ARM64 emulation
-  provisioner "file" {
-    source      = "./files/qemu-multicore.patch"
-    destination = "/tmp/qemu-multicore.patch"
-  }
   provisioner "file" {
     source      = "./files/cheribuild.json"
     destination = "/tmp/cheribuild.json"

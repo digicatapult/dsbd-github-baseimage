@@ -7,7 +7,7 @@ echo "Starting script execution..."
 CHERI_USER="cheri"
 CHERI_HOME="/home/$CHERI_USER"
 QEMU_REPO="https://github.com/CTSRD-CHERI/qemu.git"
-QEMU_BRANCH="qemu-cheri-bsd-user-mttcg-buildfixessystemmode"
+QEMU_BRANCH="qemu-cheri"
 CHERIBUILD_REPO="https://github.com/CTSRD-CHERI/cheribuild.git"
 OUTPUT_DIR="/output"
 ZFS_GROUP="disk"  # or another appropriate group
@@ -97,7 +97,7 @@ setup_user_and_zfs_permissions() {
 install_qemu() {
     echo "Installing CHERI QEMU..."
     runuser -l "$CHERI_USER" -c "git clone -b \"$QEMU_BRANCH\" --single-branch \"$QEMU_REPO\" \"$CHERI_HOME/cheri/qemu\""
-    runuser -l "$CHERI_USER" -c "pushd \"$CHERI_HOME/cheri/qemu\" && git apply /tmp/qemu-multicore.patch && git submodule update --init --recursive && popd"
+    runuser -l "$CHERI_USER" -c "pushd \"$CHERI_HOME/cheri/qemu\" && git submodule update --init --recursive && popd"
     echo "CHERI QEMU installation complete."
 }
 
