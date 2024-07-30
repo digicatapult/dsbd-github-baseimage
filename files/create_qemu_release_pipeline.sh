@@ -4,6 +4,8 @@
 RELEASE_PIPELINE="${RELEASE_PIPELINE:-0}"  # Enable a release pipeline for jail images (pots), default 0
 RELEASE_NAME="${RELEASE_NAME:-sibling}"  # Set the name of upstream pots
 RELEASE_VERSION="${RELEASE_VERSION:-1.0.0}"  # Set their release version
+SECRET_SOURCE="${SECRET_SOURCE:-azure}"  # Default cloud platform
+SMB_SHARE="${SMB_SHARE:-/etc/qemu-morello/smbshare}"  # Default path to the SMB share
 STORAGE_ACCOUNT="${STORAGE_ACCOUNT:-YourStorageAccount}"  # Default Azure Storage Account
 FILE_SHARE="${FILE_SHARE:-YourFileShare}"  # Default Azure File Share
 
@@ -19,7 +21,7 @@ handle_error() {
 }
 
 export_azure_artefacts() {
-    pots="${CONFIG_FILE}"/pots
+    pots="$SMB_SHARE"/pots
     if [ ! -d "$pots" ]; then
         handle_error "No directory could be found on the guest containing pots."
         return 1
@@ -43,12 +45,12 @@ export_azure_artefacts() {
 }
 
 setup_pipeline() {
-    pipeline=/etc/qemu-morello/smbshare/pipeline.txt
+    pipeline="$SMB_SHARE"/pipeline.txt
     echo RELEASE_PIPELINE="${RELEASE_PIPELINE}" > "$pipeline"
     echo RELEASE_NAME="${RELEASE_NAME}" >> "$pipeline"
     echo RELEASE_VERSION="${RELEASE_VERSION}" >> "$pipeline"
     chmod 600 "$pipeline"
-    chown -R cheri:cheri /etc/qemu-morello/smbshare
+    chown -R cheri:cheri "$SMB_SHARE"
 
     if [ "${RELEASE_PIPELINE}" -eq 1 ]; then
         log "A pipeline has been configured to release pots via SMB"

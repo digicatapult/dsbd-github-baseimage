@@ -122,5 +122,4 @@ chown -R cheri:cheri /etc/qemu-morello/smbshare
 log "GitHub PAT and Org stored securely in smbshare directory."
 
 # Export useful non-secret variables for other services
-export CONFIG_FILE
 export SECRET_SOURCE
