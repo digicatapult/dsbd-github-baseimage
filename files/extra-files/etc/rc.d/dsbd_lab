@@ -155,6 +155,15 @@ UsePAM no"
     echo "Finished configuring the base pot"
 }
 
+wipe_pots() {
+    # Destroy unwanted pots from the previous session
+    pots=$(pot ls -p -q | grep -iv 'sibling' | awk '{ print length($0) " " $0; }' - | sort -r -n | cut -d ' ' -f 2- )
+    for clone in $pots; do
+        pot destroy -p "$clone" -F
+    done
+    rm -rdf "$HOME/act-pot-cheribsd/runners/*"
+}
+
 start_pots() {
     count=$(pot ls -p -q | wc -l)
     max_runners=3
@@ -198,7 +207,6 @@ start_cronjobs() {
     service cron onestart
 }
 
-
 dsbd_lab_start() {
     check_and_mount_smb
     set_env_vars
@@ -215,6 +223,7 @@ dsbd_lab_start() {
     #create_base_bridge
     #configure_base_sshd
 
+    wipe_pots
     enable_runners
     start_pots
     start_cronjobs
