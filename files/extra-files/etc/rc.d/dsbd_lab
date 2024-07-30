@@ -165,7 +165,7 @@ wipe_pots() {
 }
 
 start_pots() {
-    count=$(pot ls -p -q | wc -l)
+    count=$(pot ls -p -q | grep -ci 'cheribsd')
     max_runners=3
 
     . $HOME/.profile
