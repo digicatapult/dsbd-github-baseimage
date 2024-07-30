@@ -3,14 +3,19 @@ set -euo pipefail
 
 echo "Starting script execution..."
 
-# Configuration Variables
+# Configuration variables
 CHERI_USER="cheri"
 CHERI_HOME="/home/$CHERI_USER"
+OUTPUT_DIR="/output"
+ZFS_GROUP="disk"
+
+# Dependencies (can be modified with branch names or commit IDs)
 QEMU_REPO="https://github.com/CTSRD-CHERI/qemu.git"
 QEMU_BRANCH="qemu-cheri"
 CHERIBUILD_REPO="https://github.com/CTSRD-CHERI/cheribuild.git"
-OUTPUT_DIR="/output"
-ZFS_GROUP="disk"  # or another appropriate group
+CHERIBUILD_BRANCH="main"
+CHERIBSD_REPO="https://github.com/CTSRD-CHERI/cheribsd.git"
+CHERIBSD_BRANCH="main"
 
 echo "Configuration variables set."
 
@@ -94,16 +99,32 @@ setup_user_and_zfs_permissions() {
     echo "User setup and ZFS permissions configuration complete."
 }
 
+install_cheribsd() {
+    echo "Checking out CheriBSD..."
+    runuser -l "$CHERI_USER" -c "git clone \"$CHERIBSD_REPO\" \"$CHERI_HOME/cheri/cheribsd\""
+    if [ ! -z "$CHERIBSD_BRANCH" ]; then
+        runuser -l "$CHERI_USER" -c "git -C \"$CHERI_HOME/cheri/cheribsd\" checkout \"$CHERIBSD_BRANCH\""
+    fi
+    echo "CheriBSD checkout complete."
+}
+
 install_qemu() {
     echo "Installing CHERI QEMU..."
-    runuser -l "$CHERI_USER" -c "git clone -b \"$QEMU_BRANCH\" --single-branch \"$QEMU_REPO\" \"$CHERI_HOME/cheri/qemu\""
-    runuser -l "$CHERI_USER" -c "pushd \"$CHERI_HOME/cheri/qemu\" && git submodule update --init --recursive && popd"
+    runuser -l "$CHERI_USER" -c "git clone \"$QEMU_REPO\" \"$CHERI_HOME/cheri/qemu\""
+    if [ ! -z "$QEMU_BRANCH" ]; then
+        runuser -l "$CHERI_USER" -c "git -C \"$CHERI_HOME/cheri/qemu\" checkout \"$QEMU_BRANCH\""
+    fi
+    runuser -l "$CHERI_USER" -c "git -C \"$CHERI_HOME/cheri/qemu\" submodule sync"
+    runuser -l "$CHERI_USER" -c "git -C \"$CHERI_HOME/cheri/qemu\" submodule update --init --recursive"
     echo "CHERI QEMU installation complete."
 }
 
 install_cheribuild() {
     echo "Installing Cheribuild..."
     runuser -l "$CHERI_USER" -c "git clone \"$CHERIBUILD_REPO\" \"$CHERI_HOME/cheri/cheribuild\""
+    if [ ! -z "$CHERIBUILD_BRANCH" ]; then
+        runuser -l "$CHERI_USER" -c "git -C \"$CHERI_HOME/cheri/cheribuild\" checkout \"$CHERIBUILD_BRANCH\""
+    fi
     echo "Cheribuild installation complete."
 }
 
@@ -114,5 +135,6 @@ install_aws_cli
 install_azure_cli
 setup_user_and_zfs_permissions
 install_qemu
+install_cheribsd
 install_cheribuild
 echo "Script execution completed successfully."
